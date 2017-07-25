@@ -43,7 +43,7 @@ repositories {
 
 apply from: file('gradle/maven.gradle')
 apply plugin: 'maven'
-//apply plugin: 'osgi'
+apply plugin: 'osgi'
 
 dependencies {
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
@@ -89,6 +89,7 @@ jar {
     manifest {
         name = 'rxjava2_9'
         instruction 'Bundle-Vendor', 'akarnokd'
+        instruction 'Bundle-Description', 'RxJava 2 built with JDK 9'
         instruction 'Bundle-DocURL', 'https://github.com/akarnokd/RxJava2_9'
         instruction 'Import-Package', '!org.junit,!junit.framework,!org.mockito.*,*'
         instruction 'Eclipse-ExtensibleAPI', 'true'
