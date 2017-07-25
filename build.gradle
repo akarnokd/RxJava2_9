@@ -90,7 +90,7 @@ artifacts {
 
 jar {
     manifest {
-        name = 'rxjava2-jdk9'
+        name = 'rxjava2_9'
         instruction 'Bundle-Vendor', 'akarnokd'
         instruction 'Bundle-DocURL', 'https://github.com/akarnokd/RxJava2_9'
         instruction 'Import-Package', '!org.junit,!junit.framework,!org.mockito.*,*'
