@@ -43,7 +43,7 @@ repositories {
 
 apply from: file('gradle/maven.gradle')
 apply plugin: 'maven'
-apply plugin: 'osgi'
+//apply plugin: 'osgi'
 
 dependencies {
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
@@ -129,7 +129,7 @@ javadoc {
 test {
     maxHeapSize = "1g"
     testLogging  {
-        events "started", "failed" // "skipped", "passed"
+        events "skipped" //"started", "failed" // , "passed"
     //    showStandardStreams = true
     }
 }
