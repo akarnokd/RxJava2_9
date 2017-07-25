@@ -93,7 +93,7 @@ public final class FlowableCache<T> extends AbstractFlowableWithUpstream<T, T> {
      */
     static final class CacheState<T> extends LinkedArrayList implements FlowableSubscriber<T> {
         /** The source observable to connect to. */
-        final Flowable<? extends T> source;
+        final Flowable<T> source;
         /** Holds onto the subscriber connected to source. */
         final AtomicReference<Subscription> connection = new AtomicReference<Subscription>();
         /** Guarded by connection (not this). */
@@ -114,7 +114,7 @@ public final class FlowableCache<T> extends AbstractFlowableWithUpstream<T, T> {
         boolean sourceDone;
 
         @SuppressWarnings("unchecked")
-        CacheState(Flowable<? extends T> source, int capacityHint) {
+        CacheState(Flowable<T> source, int capacityHint) {
             super(capacityHint);
             this.source = source;
             this.subscribers = new AtomicReference<ReplaySubscription<T>[]>(EMPTY);
@@ -167,7 +167,6 @@ public final class FlowableCache<T> extends AbstractFlowableWithUpstream<T, T> {
                 ReplaySubscription<T>[] b;
                 if (n == 1) {
                     b = EMPTY;
-                    return;
                 } else {
                     b = new ReplaySubscription[n - 1];
                     System.arraycopy(a, 0, b, 0, j);
@@ -191,7 +190,7 @@ public final class FlowableCache<T> extends AbstractFlowableWithUpstream<T, T> {
          * Make sure this is called only once.
          */
         public void connect() {
-            source.subscribe((FlowableSubscriber<T>)this);
+            source.subscribe(this);
             isConnected = true;
         }
         @Override

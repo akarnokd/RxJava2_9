@@ -27,11 +27,11 @@ import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.*;
 
 public final class BlockingFlowableIterable<T> implements Iterable<T> {
-    final Flowable<? extends T> source;
+    final Flowable<T> source;
 
     final int bufferSize;
 
-    public BlockingFlowableIterable(Flowable<? extends T> source, int bufferSize) {
+    public BlockingFlowableIterable(Flowable<T> source, int bufferSize) {
         this.source = source;
         this.bufferSize = bufferSize;
     }
@@ -39,7 +39,7 @@ public final class BlockingFlowableIterable<T> implements Iterable<T> {
     @Override
     public Iterator<T> iterator() {
         BlockingFlowableIterator<T> it = new BlockingFlowableIterator<T>(bufferSize);
-        source.subscribe((FlowableSubscriber<T>)it);
+        source.subscribe(it);
         return it;
     }
 

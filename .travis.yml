@@ -1,0 +1,28 @@
+language: java
+
+sudo: required
+dist: trusty
+group: edge
+jdk: oraclejdk9
+addons:
+  apt:
+    packages:
+      - oracle-java9-installer
+
+
+#jdk:
+#  - oraclejdk9
+
+before_install:
+  - chmod +x gradlew
+  - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
+  - export GRADLE_OPTS=-Xmx1024m
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+ # cache between builds
+cache:
+  directories:
+  - $HOME/.m2
+  - $HOME/.gradle

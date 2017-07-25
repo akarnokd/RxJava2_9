@@ -14,14 +14,12 @@
 package io.reactivex.internal.operators.flowable;
 
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.reactivestreams.*;
 
 import io.reactivex.*;
 import io.reactivex.Scheduler.Worker;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.internal.disposables.DisposableHelper;
 import io.reactivex.internal.subscribers.FullArbiterSubscriber;
 import io.reactivex.internal.subscriptions.*;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -33,15 +31,7 @@ public final class FlowableTimeoutTimed<T> extends AbstractFlowableWithUpstream<
     final Scheduler scheduler;
     final Publisher<? extends T> other;
 
-    static final Disposable NEW_TIMER = new Disposable() {
-        @Override
-        public void dispose() { }
-
-        @Override
-        public boolean isDisposed() {
-            return true;
-        }
-    };
+    static final Disposable NEW_TIMER = new EmptyDispose();
 
     public FlowableTimeoutTimed(Flowable<T> source,
             long timeout, TimeUnit unit, Scheduler scheduler, Publisher<? extends T> other) {
@@ -76,7 +66,7 @@ public final class FlowableTimeoutTimed<T> extends AbstractFlowableWithUpstream<
 
         final FullArbiter<T> arbiter;
 
-        final AtomicReference<Disposable> timer = new AtomicReference<Disposable>();
+        Disposable timer;
 
         volatile long index;
 
@@ -118,29 +108,11 @@ public final class FlowableTimeoutTimed<T> extends AbstractFlowableWithUpstream<
         }
 
         void scheduleTimeout(final long idx) {
-            Disposable d = timer.get();
-            if (d != null) {
-                d.dispose();
+            if (timer != null) {
+                timer.dispose();
             }
 
-            if (timer.compareAndSet(d, NEW_TIMER)) {
-                d = worker.schedule(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (idx == index) {
-                            done = true;
-                            s.cancel();
-                            DisposableHelper.dispose(timer);
-
-                            subscribeNext();
-
-                            worker.dispose();
-                        }
-                    }
-                }, timeout, unit);
-
-                DisposableHelper.replace(timer, d);
-            }
+            timer = worker.schedule(new TimeoutTask(idx), timeout, unit);
         }
 
         void subscribeNext() {
@@ -178,6 +150,26 @@ public final class FlowableTimeoutTimed<T> extends AbstractFlowableWithUpstream<
         public boolean isDisposed() {
             return worker.isDisposed();
         }
+
+        final class TimeoutTask implements Runnable {
+            private final long idx;
+
+            TimeoutTask(long idx) {
+                this.idx = idx;
+            }
+
+            @Override
+            public void run() {
+                if (idx == index) {
+                    done = true;
+                    s.cancel();
+                    worker.dispose();
+
+                    subscribeNext();
+
+                }
+            }
+        }
     }
 
     static final class TimeoutTimedSubscriber<T> implements FlowableSubscriber<T>, Disposable, Subscription {
@@ -188,7 +180,7 @@ public final class FlowableTimeoutTimed<T> extends AbstractFlowableWithUpstream<
 
         Subscription s;
 
-        final AtomicReference<Disposable> timer = new AtomicReference<Disposable>();
+        Disposable timer;
 
         volatile long index;
 
@@ -224,26 +216,11 @@ public final class FlowableTimeoutTimed<T> extends AbstractFlowableWithUpstream<
         }
 
         void scheduleTimeout(final long idx) {
-            Disposable d = timer.get();
-            if (d != null) {
-                d.dispose();
+            if (timer != null) {
+                timer.dispose();
             }
 
-            if (timer.compareAndSet(d, NEW_TIMER)) {
-                d = worker.schedule(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (idx == index) {
-                            done = true;
-                            dispose();
-
-                            actual.onError(new TimeoutException());
-                        }
-                    }
-                }, timeout, unit);
-
-                DisposableHelper.replace(timer, d);
-            }
+            timer = worker.schedule(new TimeoutTask(idx), timeout, unit);
         }
 
         @Override
@@ -289,5 +266,35 @@ public final class FlowableTimeoutTimed<T> extends AbstractFlowableWithUpstream<
         public void cancel() {
             dispose();
         }
+
+        final class TimeoutTask implements Runnable {
+            private final long idx;
+
+            TimeoutTask(long idx) {
+                this.idx = idx;
+            }
+
+            @Override
+            public void run() {
+                if (idx == index) {
+                    done = true;
+                    dispose();
+
+                    actual.onError(new TimeoutException());
+                }
+            }
+        }
     }
+
+    static final class EmptyDispose implements Disposable {
+        @Override
+        public void dispose() { }
+
+        @Override
+        public boolean isDisposed() {
+            return true;
+        }
+    }
+
+
 }

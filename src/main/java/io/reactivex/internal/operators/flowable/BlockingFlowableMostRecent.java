@@ -16,7 +16,6 @@ package io.reactivex.internal.operators.flowable;
 import java.util.*;
 
 import io.reactivex.Flowable;
-import io.reactivex.FlowableSubscriber;
 import io.reactivex.internal.util.*;
 import io.reactivex.subscribers.DefaultSubscriber;
 
@@ -30,11 +29,11 @@ import io.reactivex.subscribers.DefaultSubscriber;
  */
 public final class BlockingFlowableMostRecent<T> implements Iterable<T> {
 
-    final Flowable<? extends T> source;
+    final Flowable<T> source;
 
     final T initialValue;
 
-    public BlockingFlowableMostRecent(Flowable<? extends T> source, T initialValue) {
+    public BlockingFlowableMostRecent(Flowable<T> source, T initialValue) {
         this.source = source;
         this.initialValue = initialValue;
     }
@@ -47,8 +46,7 @@ public final class BlockingFlowableMostRecent<T> implements Iterable<T> {
          * Subscribe instead of unsafeSubscribe since this is the final subscribe in the chain
          * since it is for BlockingObservable.
          */
-        FlowableSubscriber<? super T> fs = mostRecentSubscriber;
-        source.subscribe(fs);
+        source.subscribe(mostRecentSubscriber);
 
         return mostRecentSubscriber.getIterable();
     }
@@ -80,44 +78,46 @@ public final class BlockingFlowableMostRecent<T> implements Iterable<T> {
          * thread expect {@link Iterator#next()} called from a different thread to work.
          * @return the Iterator
          */
-        public Iterator<T> getIterable() {
-            return new Iterator<T>() {
-                /**
-                 * buffer to make sure that the state of the iterator doesn't change between calling hasNext() and next().
-                 */
-                private Object buf;
+        public Iterator getIterable() {
+            return new Iterator();
+        }
 
-                @Override
-                public boolean hasNext() {
-                    buf = value;
-                    return !NotificationLite.isComplete(buf);
-                }
+        final class Iterator implements java.util.Iterator<T> {
+            /**
+             * buffer to make sure that the state of the iterator doesn't change between calling hasNext() and next().
+             */
+            private Object buf;
 
-                @Override
-                public T next() {
-                    try {
-                        // if hasNext wasn't called before calling next.
-                        if (buf == null) {
-                            buf = value;
-                        }
-                        if (NotificationLite.isComplete(buf)) {
-                            throw new NoSuchElementException();
-                        }
-                        if (NotificationLite.isError(buf)) {
-                            throw ExceptionHelper.wrapOrThrow(NotificationLite.getError(buf));
-                        }
-                        return NotificationLite.getValue(buf);
+            @Override
+            public boolean hasNext() {
+                buf = value;
+                return !NotificationLite.isComplete(buf);
+            }
+
+            @Override
+            public T next() {
+                try {
+                    // if hasNext wasn't called before calling next.
+                    if (buf == null) {
+                        buf = value;
                     }
-                    finally {
-                        buf = null;
+                    if (NotificationLite.isComplete(buf)) {
+                        throw new NoSuchElementException();
                     }
+                    if (NotificationLite.isError(buf)) {
+                        throw ExceptionHelper.wrapOrThrow(NotificationLite.getError(buf));
+                    }
+                    return NotificationLite.getValue(buf);
                 }
+                finally {
+                    buf = null;
+                }
+            }
 
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException("Read only iterator");
-                }
-            };
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException("Read only iterator");
+            }
         }
     }
 }
