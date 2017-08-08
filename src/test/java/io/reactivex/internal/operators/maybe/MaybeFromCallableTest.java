@@ -147,7 +147,7 @@ public class MaybeFromCallableTest {
 
             to.cancel();
 
-            cdl2.countDown();
+            //cdl2.countDown();
 
             int timeout = 50;
 
