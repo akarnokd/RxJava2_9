@@ -5,6 +5,11 @@ dist: trusty
 group: edge
 jdk: oraclejdk9
 
+env:
+  - RXJAVA_TARGET=1.6
+  - RXJAVA_TARGET=1.8
+  - RXJAVA_TARGET=1.9
+
 #jdk:
 #  - oraclejdk9
 

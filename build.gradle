@@ -21,8 +21,13 @@ apply plugin: 'jacoco'
 apply plugin: 'ru.vyarus.animalsniffer'
 apply plugin: "com.github.hierynomus.license"
 
-sourceCompatibility = '1.9'
-targetCompatibility = '1.9'
+String targetStr = System.getenv("RXJAVA_TARGET")
+if (targetStr == null || targetStr.isEmpty()) {
+    targetStr = '1.9'
+    System.out.println("RXJAVA_TARGET env not found, using default " + targetStr)
+}
+sourceCompatibility = targetStr
+targetCompatibility = targetStr
 
 group = "com.github.akarnokd" 
 ext.githubProjectName = 'rxjava2_9'
