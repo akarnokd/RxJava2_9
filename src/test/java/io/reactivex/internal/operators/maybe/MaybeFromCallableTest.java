@@ -138,7 +138,7 @@ public class MaybeFromCallableTest {
                 @Override
                 public Integer call() throws Exception {
                     cdl1.countDown();
-                    cdl2.await();
+                    cdl2.await(5, TimeUnit.SECONDS);
                     return 1;
                 }
             }).subscribeOn(Schedulers.single()).test();
@@ -149,11 +149,13 @@ public class MaybeFromCallableTest {
 
             cdl2.countDown();
 
-            int timeout = 10;
+            int timeout = 50;
 
             while (timeout-- > 0 && errors.isEmpty()) {
                 Thread.sleep(100);
             }
+
+            to.assertEmpty();
 
             TestHelper.assertUndeliverable(errors, 0, InterruptedException.class);
         } finally {
