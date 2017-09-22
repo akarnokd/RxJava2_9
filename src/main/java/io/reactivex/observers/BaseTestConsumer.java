@@ -523,6 +523,21 @@ public abstract class BaseTestConsumer<T, U extends BaseTestConsumer<T, U>> impl
     }
 
     /**
+     * Assert that the TestObserver/TestSubscriber received only the specified values in the specified order without terminating.
+     * @param values the values expected
+     * @return this;
+     * @since 2.1.4
+     */
+    @SuppressWarnings("unchecked")
+    @Experimental
+    public final U assertValuesOnly(T... values) {
+        return assertSubscribed()
+                .assertValues(values)
+                .assertNoErrors()
+                .assertNotComplete();
+    }
+
+    /**
      * Assert that the TestObserver/TestSubscriber received only the specified values in any order.
      * <p>This helps asserting when the order of the values is not guaranteed, i.e., when merging
      * asynchronous streams.
@@ -552,20 +567,20 @@ public abstract class BaseTestConsumer<T, U extends BaseTestConsumer<T, U>> impl
     @SuppressWarnings("unchecked")
     public final U assertValueSequence(Iterable<? extends T> sequence) {
         int i = 0;
-        Iterator<T> vit = values.iterator();
-        Iterator<? extends T> it = sequence.iterator();
+        Iterator<T> actualIterator = values.iterator();
+        Iterator<? extends T> expectedIterator = sequence.iterator();
         boolean actualNext;
         boolean expectedNext;
         for (;;) {
-            actualNext = it.hasNext();
-            expectedNext = vit.hasNext();
+            expectedNext = expectedIterator.hasNext();
+            actualNext = actualIterator.hasNext();
 
             if (!actualNext || !expectedNext) {
                 break;
             }
 
-            T v = it.next();
-            T u = vit.next();
+            T u = expectedIterator.next();
+            T v = actualIterator.next();
 
             if (!ObjectHelper.equals(u, v)) {
                 throw fail("Values at position " + i + " differ; Expected: " + valueAndClass(u) + ", Actual: " + valueAndClass(v));

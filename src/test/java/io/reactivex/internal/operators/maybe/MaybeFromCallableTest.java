@@ -147,15 +147,11 @@ public class MaybeFromCallableTest {
 
             to.cancel();
 
-            //cdl2.countDown();
-
-            int timeout = 50;
+            int timeout = 10;
 
             while (timeout-- > 0 && errors.isEmpty()) {
                 Thread.sleep(100);
             }
-
-            to.assertEmpty();
 
             TestHelper.assertUndeliverable(errors, 0, InterruptedException.class);
         } finally {

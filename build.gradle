@@ -53,12 +53,12 @@ apply plugin: 'osgi'
 dependencies {
     signature 'org.codehaus.mojo.signature:java16:1.1@signature'
 
-    compile 'org.reactivestreams:reactive-streams:1.0.0'
+    compile 'org.reactivestreams:reactive-streams:1.0.1'
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.1.0'
 
-    testCompile 'org.reactivestreams:reactive-streams-tck:1.0.0'
+    testCompile 'org.reactivestreams:reactive-streams-tck:1.0.1'
     testCompile group: 'org.testng', name: 'testng', version: '6.9.10'
 }
 
@@ -130,6 +130,24 @@ plugins.withType(EclipsePlugin) {
 
 javadoc {
     failOnError = false
+
+    exclude "**/internal/**"
+    exclude "**/test/**"
+    exclude "**/perf/**"
+    options {
+        windowTitle = "RxJava Javadoc ${project.version}"
+    }
+    // Clear the following options to make the docs consistent with the old format
+    options.addStringOption('top').value = ''
+    options.addStringOption('doctitle').value = ''
+    options.addStringOption('header').value = ''
+    options.links("http://docs.oracle.com/javase/7/docs/api/")
+	/*
+    if (JavaVersion.current().isJava7()) {
+        // "./gradle/stylesheet.css" only supports Java 7
+        options.addStringOption('stylesheetfile', rootProject.file('./gradle/stylesheet.css').toString())
+    }
+	*/
 }
 
 test {
