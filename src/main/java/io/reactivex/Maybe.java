@@ -463,7 +463,6 @@ public abstract class Maybe<T> implements MaybeSource<T> {
      *
      * });
      * </code></pre>
-     * <p>
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code create} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -837,7 +836,6 @@ public abstract class Maybe<T> implements MaybeSource<T> {
      * emitted by the nested {@code MaybeSource}, without any transformation.
      * <p>
      * <img width="640" height="393" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/Maybe.merge.oo.png" alt="">
-     * <p>
      * <dl>
      * <dt><b>Scheduler:</b></dt>
      * <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -2271,7 +2269,6 @@ public abstract class Maybe<T> implements MaybeSource<T> {
      * Delays the emission of this Maybe until the given Publisher signals an item or completes.
      * <p>
      * <img width="640" height="450" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/delay.oo.png" alt="">
-     * <p>
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The {@code delayIndicator} is consumed in an unbounded manner but is cancelled after
@@ -2301,7 +2298,6 @@ public abstract class Maybe<T> implements MaybeSource<T> {
     /**
      * Returns a Maybe that delays the subscription to this Maybe
      * until the other Publisher emits an element or completes normally.
-     * <p>
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The {@code Publisher} source is consumed in an unbounded fashion (without applying backpressure).</dd>
@@ -3316,6 +3312,7 @@ public abstract class Maybe<T> implements MaybeSource<T> {
         ObjectHelper.requireNonNull(next, "next is null");
         return RxJavaPlugins.onAssembly(new MaybeOnErrorNext<T>(this, Functions.justFunction(next), false));
     }
+
     /**
      * Nulls out references to the upstream producer and downstream MaybeObserver if
      * the sequence is terminated or downstream calls dispose().
@@ -3323,7 +3320,7 @@ public abstract class Maybe<T> implements MaybeSource<T> {
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code onTerminateDetach} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
-     * @return a Maybe which out references to the upstream producer and downstream MaybeObserver if
+     * @return a Maybe which nulls out references to the upstream producer and downstream MaybeObserver if
      * the sequence is terminated or downstream calls dispose()
      */
     @CheckReturnValue
@@ -3802,7 +3799,6 @@ public abstract class Maybe<T> implements MaybeSource<T> {
      * MaybeSource if the current Maybe is empty.
      * <p>
      * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/switchifempty.m.png" alt="">
-     * <p/>
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code switchIfEmpty} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -3825,7 +3821,6 @@ public abstract class Maybe<T> implements MaybeSource<T> {
      * SingleSource if the current Maybe is empty.
      * <p>
      * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/switchifempty.m.png" alt="">
-     * <p/>
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code switchIfEmpty} does not operate by default on a particular {@link Scheduler}.</dd>

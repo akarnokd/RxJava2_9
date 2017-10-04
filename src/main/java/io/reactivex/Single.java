@@ -344,7 +344,6 @@ public abstract class Single<T> implements SingleSource<T> {
      *
      * });
      * </code></pre>
-     * <p>
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code create} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -579,6 +578,17 @@ public abstract class Single<T> implements SingleSource<T> {
      * Wraps a specific Publisher into a Single and signals its single element or error.
      * <p>If the source Publisher is empty, a NoSuchElementException is signalled. If
      * the source has more than one element, an IndexOutOfBoundsException is signalled.
+     * <p>
+     * The {@link Publisher} must follow the
+     * <a href="https://github.com/reactive-streams/reactive-streams-jvm#reactive-streams">Reactive-Streams specification</a>.
+     * Violating the specification may result in undefined behavior.
+     * <p>
+     * If possible, use {@link #create(SingleOnSubscribe)} to create a
+     * source-like {@code Single} instead.
+     * <p>
+     * Note that even though {@link Publisher} appears to be a functional interface, it
+     * is not recommended to implement it through a lambda as the specification requires
+     * state management not achievable with a stateless lambda.
      * <dl>
      * <dt><b>Backpressure:</b></dt>
      * <dd>The {@code publisher} is consumed in an unbounded fashion but will be cancelled
@@ -589,6 +599,7 @@ public abstract class Single<T> implements SingleSource<T> {
      * @param <T> the value type
      * @param publisher the source Publisher instance, not null
      * @return the new Single instance
+     * @see #create(SingleOnSubscribe)
      */
     @BackpressureSupport(BackpressureKind.UNBOUNDED_IN)
     @CheckReturnValue
@@ -602,7 +613,6 @@ public abstract class Single<T> implements SingleSource<T> {
      * Wraps a specific ObservableSource into a Single and signals its single element or error.
      * <p>If the ObservableSource is empty, a NoSuchElementException is signalled.
      * If the source has more than one element, an IndexOutOfBoundsException is signalled.
-     * <p>
      * <dl>
      *   <dt><b>Scheduler:</b></dt>
      *   <dd>{@code fromObservable} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -695,7 +705,6 @@ public abstract class Single<T> implements SingleSource<T> {
      * emitted by the nested {@code Single}, without any transformation.
      * <p>
      * <img width="640" height="370" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/Single.merge.oo.png" alt="">
-     * <p>
      * <dl>
      * <dt><b>Scheduler:</b></dt>
      * <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -1617,14 +1626,14 @@ public abstract class Single<T> implements SingleSource<T> {
     }
 
     /**
-     * Delays the emission of the success or error signal from the current Single by
-     * the specified amount.
+     * Delays the emission of the success signal from the current Single by the specified amount.
+     * An error signal will not be delayed.
      * <dl>
      * <dt><b>Scheduler:</b></dt>
      * <dd>{@code delay} operates by default on the {@code computation} {@link Scheduler}.</dd>
      * </dl>
      *
-     * @param time the time amount to delay the signals
+     * @param time the amount of time the success signal should be delayed for
      * @param unit the time unit
      * @return the new Single instance
      * @since 2.0
@@ -1632,17 +1641,38 @@ public abstract class Single<T> implements SingleSource<T> {
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.COMPUTATION)
     public final Single<T> delay(long time, TimeUnit unit) {
-        return delay(time, unit, Schedulers.computation());
+        return delay(time, unit, Schedulers.computation(), false);
+    }
+
+    /**
+     * Delays the emission of the success or error signal from the current Single by the specified amount.
+     * <dl>
+     * <dt><b>Scheduler:</b></dt>
+     * <dd>{@code delay} operates by default on the {@code computation} {@link Scheduler}.</dd>
+     * </dl>
+     *
+     * @param time the amount of time the success or error signal should be delayed for
+     * @param unit the time unit
+     * @param delayError if true, both success and error signals are delayed. if false, only success signals are delayed.
+     * @return the new Single instance
+     * @since 2.1.5 - experimental
+     */
+    @Experimental
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.COMPUTATION)
+    public final Single<T> delay(long time, TimeUnit unit, boolean delayError) {
+        return delay(time, unit, Schedulers.computation(), delayError);
     }
 
     /**
      * Delays the emission of the success signal from the current Single by the specified amount.
+     * An error signal will not be delayed.
      * <dl>
      * <dt><b>Scheduler:</b></dt>
      * <dd>you specify the {@link Scheduler} where the non-blocking wait and emission happens</dd>
      * </dl>
      *
-     * @param time the time amount to delay the emission of the success signal
+     * @param time the amount of time the success signal should be delayed for
      * @param unit the time unit
      * @param scheduler the target scheduler to use for the non-blocking wait and emission
      * @return the new Single instance
@@ -1654,9 +1684,33 @@ public abstract class Single<T> implements SingleSource<T> {
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.CUSTOM)
     public final Single<T> delay(final long time, final TimeUnit unit, final Scheduler scheduler) {
+        return delay(time, unit, scheduler, false);
+    }
+
+    /**
+     * Delays the emission of the success or error signal from the current Single by the specified amount.
+     * <dl>
+     * <dt><b>Scheduler:</b></dt>
+     * <dd>you specify the {@link Scheduler} where the non-blocking wait and emission happens</dd>
+     * </dl>
+     *
+     * @param time the amount of time the success or error signal should be delayed for
+     * @param unit the time unit
+     * @param scheduler the target scheduler to use for the non-blocking wait and emission
+     * @param delayError if true, both success and error signals are delayed. if false, only success signals are delayed.
+     * @return the new Single instance
+     * @throws NullPointerException
+     *             if unit is null, or
+     *             if scheduler is null
+     * @since 2.1.5 - experimental
+     */
+    @Experimental
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.CUSTOM)
+    public final Single<T> delay(final long time, final TimeUnit unit, final Scheduler scheduler, boolean delayError) {
         ObjectHelper.requireNonNull(unit, "unit is null");
         ObjectHelper.requireNonNull(scheduler, "scheduler is null");
-        return RxJavaPlugins.onAssembly(new SingleDelay<T>(this, time, unit, scheduler));
+        return RxJavaPlugins.onAssembly(new SingleDelay<T>(this, time, unit, scheduler, delayError));
     }
 
     /**
@@ -2356,9 +2410,9 @@ public abstract class Single<T> implements SingleSource<T> {
     /**
      * Instructs a Single to pass control to another Single rather than invoking
      * {@link SingleObserver#onError(Throwable)} if it encounters an error.
-     * <p/>
+     * <p>
      * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/onErrorResumeNext.png" alt="">
-     * <p/>
+     * <p>
      * By default, when a Single encounters an error that prevents it from emitting the expected item to
      * its {@link SingleObserver}, the Single invokes its SingleObserver's {@code onError} method, and then quits
      * without invoking any more of its SingleObserver's methods. The {@code onErrorResumeNext} method changes this
@@ -2368,7 +2422,7 @@ public abstract class Single<T> implements SingleSource<T> {
      * will invoke the SingleObserver's {@link SingleObserver#onSuccess onSuccess} method if it is able to do so. In such a case,
      * because no Single necessarily invokes {@code onError}, the SingleObserver may never know that an error
      * happened.
-     * <p/>
+     * <p>
      * You can use this to prevent errors from propagating or to supply fallback data should errors be
      * encountered.
      * <dl>
@@ -2390,9 +2444,9 @@ public abstract class Single<T> implements SingleSource<T> {
     /**
      * Instructs a Single to pass control to another Single rather than invoking
      * {@link SingleObserver#onError(Throwable)} if it encounters an error.
-     * <p/>
+     * <p>
      * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/onErrorResumeNext.png" alt="">
-     * <p/>
+     * <p>
      * By default, when a Single encounters an error that prevents it from emitting the expected item to
      * its {@link SingleObserver}, the Single invokes its SingleObserver's {@code onError} method, and then quits
      * without invoking any more of its SingleObserver's methods. The {@code onErrorResumeNext} method changes this
@@ -2402,7 +2456,7 @@ public abstract class Single<T> implements SingleSource<T> {
      * will invoke the SingleObserver's {@link SingleObserver#onSuccess onSuccess} method if it is able to do so. In such a case,
      * because no Single necessarily invokes {@code onError}, the SingleObserver may never know that an error
      * happened.
-     * <p/>
+     * <p>
      * You can use this to prevent errors from propagating or to supply fallback data should errors be
      * encountered.
      * <dl>
@@ -2421,6 +2475,24 @@ public abstract class Single<T> implements SingleSource<T> {
             final Function<? super Throwable, ? extends SingleSource<? extends T>> resumeFunctionInCaseOfError) {
         ObjectHelper.requireNonNull(resumeFunctionInCaseOfError, "resumeFunctionInCaseOfError is null");
         return RxJavaPlugins.onAssembly(new SingleResumeNext<T>(this, resumeFunctionInCaseOfError));
+    }
+
+    /**
+     * Nulls out references to the upstream producer and downstream SingleObserver if
+     * the sequence is terminated or downstream calls dispose().
+     * <dl>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>{@code onTerminateDetach} does not operate by default on a particular {@link Scheduler}.</dd>
+     * </dl>
+     * @return a Single which nulls out references to the upstream producer and downstream SingleObserver if
+     * the sequence is terminated or downstream calls dispose()
+     * @since 2.1.5 - experimental
+     */
+    @Experimental
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.NONE)
+    public final Single<T> onTerminateDetach() {
+        return RxJavaPlugins.onAssembly(new SingleDetach<T>(this));
     }
 
     /**
