@@ -588,7 +588,7 @@ public abstract class Single<T> implements SingleSource<T> {
      * <p>
      * Note that even though {@link Publisher} appears to be a functional interface, it
      * is not recommended to implement it through a lambda as the specification requires
-     * state management not achievable with a stateless lambda.
+     * state management that is not achievable with a stateless lambda.
      * <dl>
      * <dt><b>Backpressure:</b></dt>
      * <dd>The {@code publisher} is consumed in an unbounded fashion but will be cancelled
@@ -2801,11 +2801,11 @@ public abstract class Single<T> implements SingleSource<T> {
      * Single&lt;Integer&gt; source = Single.just(1);
      * CompositeDisposable composite = new CompositeDisposable();
      *
-     * class ResourceSingleObserver implements SingleObserver&lt;Integer&gt;, Disposable {
+     * DisposableSingleObserver&lt;Integer&gt; ds = new DisposableSingleObserver&lt;&gt;() {
      *     // ...
-     * }
+     * };
      *
-     * composite.add(source.subscribeWith(new ResourceSingleObserver()));
+     * composite.add(source.subscribeWith(ds));
      * </code></pre>
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
