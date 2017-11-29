@@ -2040,7 +2040,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator honors backpressure from downstream.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param future
@@ -2104,7 +2104,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      * <p>
      * Note that even though {@link Publisher} appears to be a functional interface, it
      * is not recommended to implement it through a lambda as the specification requires
-     * state management not achievable with a stateless lambda.
+     * state management that is not achievable with a stateless lambda.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator is a pass-through for backpressure and its behavior is determined by the
@@ -2313,7 +2313,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  may lead to {@code MissingBackpressureException} at some point in the chain.
      *  Consumers should consider applying one of the {@code onBackpressureXXX} operators as well.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param initialDelay
@@ -2375,7 +2375,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  may lead to {@code MissingBackpressureException} at some point in the chain.
      *  Consumers should consider applying one of the {@code onBackpressureXXX} operators as well.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param period
@@ -4061,7 +4061,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dd>This operator does not support backpressure as it uses time. If the downstream needs a slower rate
      *      it should slow the timer or use something like {@link #onBackpressureDrop}.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param delay
@@ -5238,6 +5238,31 @@ public abstract class Flowable<T> implements Publisher<T> {
     }
 
     /**
+     * Calls the specified converter function during assembly time and returns its resulting value.
+     * <p>
+     * This allows fluent conversion to any other type.
+     * <dl>
+     *  <dt><b>Backpressure:</b></dt>
+     *  <dd>The backpressure behavior depends on what happens in the {@code converter} function.</dd>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>{@code as} does not operate by default on a particular {@link Scheduler}.</dd>
+     * </dl>
+     *
+     * @param <R> the resulting object type
+     * @param converter the function that receives the current Flowable instance and returns a value
+     * @return the converted value
+     * @throws NullPointerException if converter is null
+     * @since 2.1.7 - experimental
+     */
+    @Experimental
+    @CheckReturnValue
+    @BackpressureSupport(BackpressureKind.SPECIAL)
+    @SchedulerSupport(SchedulerSupport.NONE)
+    public final <R> R as(@NonNull FlowableConverter<T, ? extends R> converter) {
+        return ObjectHelper.requireNonNull(converter, "converter is null").apply(this);
+    }
+
+    /**
      * Returns the first item emitted by this {@code Flowable}, or throws
      * {@code NoSuchElementException} if it emits no items.
      * <dl>
@@ -5879,7 +5904,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dd>This operator does not support backpressure as it uses time. It requests {@code Long.MAX_VALUE}
      *      upstream and does not obey downstream requests.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param timespan
@@ -5914,7 +5939,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dd>This operator does not support backpressure as it uses time. It requests {@code Long.MAX_VALUE}
      *      upstream and does not obey downstream requests.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param <U> the collection subclass type to buffer into
@@ -6024,7 +6049,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dd>This operator does not support backpressure as it uses time. It requests {@code Long.MAX_VALUE}
      *      upstream and does not obey downstream requests.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param timespan
@@ -6062,7 +6087,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dd>This operator does not support backpressure as it uses time. It requests {@code Long.MAX_VALUE}
      *      upstream and does not obey downstream requests.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param <U> the collection subclass type to buffer into
@@ -6113,7 +6138,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dd>This operator does not support backpressure as it uses time. It requests {@code Long.MAX_VALUE}
      *      upstream and does not obey downstream requests.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param timespan
@@ -7144,7 +7169,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>This operator does not support backpressure as it uses time to control data flow.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param timeout
@@ -7298,7 +7323,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator doesn't interfere with the backpressure behavior which is determined by the source {@code Publisher}.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param delay
@@ -7326,7 +7351,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator doesn't interfere with the backpressure behavior which is determined by the source {@code Publisher}.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param delay
@@ -7451,7 +7476,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator doesn't interfere with the backpressure behavior which is determined by the source {@code Publisher}.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param delay
@@ -8945,8 +8970,8 @@ public abstract class Flowable<T> implements Publisher<T> {
     }
 
     /**
-     * Maps each element of the upstream Flowable into MaybeSources, subscribes to them and
-     * waits until the upstream and all MaybeSources complete.
+     * Maps each element of the upstream Flowable into MaybeSources, subscribes to all of them
+     * and merges their onSuccess values, in no particular order, into a single Flowable sequence.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator consumes the upstream in an unbounded manner.</dd>
@@ -8965,8 +8990,9 @@ public abstract class Flowable<T> implements Publisher<T> {
     }
 
     /**
-     * Maps each element of the upstream Flowable into MaybeSources, subscribes to them and
-     * waits until the upstream and all MaybeSources complete, optionally delaying all errors.
+     * Maps each element of the upstream Flowable into MaybeSources, subscribes to at most
+     * {@code maxConcurrency} MaybeSources at a time and merges their onSuccess values,
+     * in no particular order, into a single Flowable sequence, optionally delaying all errors.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>If {@code maxConcurrency == Integer.MAX_VALUE} the operator consumes the upstream in an unbounded manner.
@@ -8992,8 +9018,8 @@ public abstract class Flowable<T> implements Publisher<T> {
     }
 
     /**
-     * Maps each element of the upstream Flowable into SingleSources, subscribes to them and
-     * waits until the upstream and all SingleSources complete.
+     * Maps each element of the upstream Flowable into SingleSources, subscribes to all of them
+     * and merges their onSuccess values, in no particular order, into a single Flowable sequence.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator consumes the upstream in an unbounded manner.</dd>
@@ -9012,8 +9038,9 @@ public abstract class Flowable<T> implements Publisher<T> {
     }
 
     /**
-     * Maps each element of the upstream Flowable into SingleSources, subscribes to them and
-     * waits until the upstream and all SingleSources complete, optionally delaying all errors.
+     * Maps each element of the upstream Flowable into SingleSources, subscribes to at most
+     * {@code maxConcurrency} SingleSources at a time and merges their onSuccess values,
+     * in no particular order, into a single Flowable sequence, optionally delaying all errors.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>If {@code maxConcurrency == Integer.MAX_VALUE} the operator consumes the upstream in an unbounded manner.
@@ -9677,6 +9704,53 @@ public abstract class Flowable<T> implements Publisher<T> {
     }
 
     /**
+     * Limits both the number of upstream items (after which the sequence completes)
+     * and the total downstream request amount requested from the upstream to
+     * possibly prevent the creation of excess items by the upstream.
+     * <p>
+     * The operator requests at most the given {@code count} of items from upstream even
+     * if the downstream requests more than that. For example, given a {@code limit(5)},
+     * if the downstream requests 1, a request of 1 is submitted to the upstream
+     * and the operator remembers that only 4 items can be requested now on. A request
+     * of 5 at this point will request 4 from the upstream and any subsequent requests will
+     * be ignored.
+     * <p>
+     * Note that requests are negotiated on an operator boundary and {@code limit}'s amount
+     * may not be preserved further upstream. For example,
+     * {@code source.observeOn(Schedulers.computation()).limit(5)} will still request the
+     * default (128) elements from the given {@code source}.
+     * <p>
+     * The main use of this operator is with sources that are async boundaries that
+     * don't interfere with request amounts, such as certain {@code Flowable}-based
+     * network endpoints that relay downstream request amounts unchanged and are, therefore,
+     * prone to trigger excessive item creation/transmission over the network.
+     * <dl>
+     *  <dt><b>Backpressure:</b></dt>
+     *  <dd>The operator requests a total of the given {@code count} items from the upstream.</dd>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>{@code limit} does not operate by default on a particular {@link Scheduler}.</dd>
+     * </dl>
+
+     * @param count the maximum number of items and the total request amount, non-negative.
+     *              Zero will immediately cancel the upstream on subscription and complete
+     *              the downstream.
+     * @return the new Flowable instance
+     * @see #take(long)
+     * @see #rebatchRequests(int)
+     * @since 2.1.6 - experimental
+     */
+    @Experimental
+    @BackpressureSupport(BackpressureKind.SPECIAL)
+    @SchedulerSupport(SchedulerSupport.NONE)
+    @CheckReturnValue
+    public final Flowable<T> limit(long count) {
+        if (count < 0) {
+            throw new IllegalArgumentException("count >= 0 required but it was " + count);
+        }
+        return RxJavaPlugins.onAssembly(new FlowableLimit<T>(this, count));
+    }
+
+    /**
      * Returns a Flowable that applies a specified function to each item emitted by the source Publisher and
      * emits the results of these function applications.
      * <p>
@@ -9772,7 +9846,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  such as {@code interval}, {@code timer}, {code PublishSubject} or {@code BehaviorSubject} and apply any
      *  of the {@code onBackpressureXXX} operators <strong>before</strong> applying {@code observeOn} itself.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param scheduler
@@ -9805,7 +9879,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  such as {@code interval}, {@code timer}, {code PublishSubject} or {@code BehaviorSubject} and apply any
      *  of the {@code onBackpressureXXX} operators <strong>before</strong> applying {@code observeOn} itself.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param scheduler
@@ -9842,7 +9916,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  such as {@code interval}, {@code timer}, {code PublishSubject} or {@code BehaviorSubject} and apply any
      *  of the {@code onBackpressureXXX} operators <strong>before</strong> applying {@code observeOn} itself.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param scheduler
@@ -11102,7 +11176,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  Subscriber which requests the largest amount: i.e., two child Subscribers with requests of 10 and 100 will
      *  request 100 elements from the underlying Publisher sequence.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param <R>
@@ -11150,7 +11224,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  Subscriber which requests the largest amount: i.e., two child Subscribers with requests of 10 and 100 will
      *  request 100 elements from the underlying Publisher sequence.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param <R>
@@ -11227,7 +11301,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  Subscriber which requests the largest amount: i.e., two child Subscribers with requests of 10 and 100 will
      *  request 100 elements from the underlying Publisher sequence.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param <R>
@@ -11267,7 +11341,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  Subscriber which requests the largest amount: i.e., two child Subscribers with requests of 10 and 100 will
      *  request 100 elements from the underlying Publisher sequence.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param <R>
@@ -11369,7 +11443,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  Subscriber which requests the largest amount: i.e., two child Subscribers with requests of 10 and 100 will
      *  request 100 elements from the underlying Publisher sequence.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param bufferSize
@@ -11411,7 +11485,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  Subscriber which requests the largest amount: i.e., two child Subscribers with requests of 10 and 100 will
      *  request 100 elements from the underlying Publisher sequence.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param bufferSize
@@ -11474,7 +11548,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  Subscriber which requests the largest amount: i.e., two child Subscribers with requests of 10 and 100 will
      *  request 100 elements from the underlying Publisher sequence.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param time
@@ -11509,7 +11583,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  Subscriber which requests the largest amount: i.e., two child Subscribers with requests of 10 and 100 will
      *  request 100 elements from the underlying Publisher sequence.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param scheduler
@@ -11846,7 +11920,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>This operator does not support backpressure as it uses time to control data flow.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param period
@@ -11880,7 +11954,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>This operator does not support backpressure as it uses time to control data flow.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * <p>History: 2.0.5 - experimental
@@ -12507,7 +12581,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dd>The operator doesn't support backpressure as it uses time to skip arbitrary number of elements and
      *  thus has to consume the source {@code Publisher} in an unbounded manner (i.e., no backpressure applied to it).</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param time
@@ -13063,7 +13137,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dd>The operator doesn't interfere with backpressure which is determined by the source {@code Publisher}'s backpressure
      *  behavior.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param scheduler
@@ -13097,7 +13171,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dd>The operator doesn't interfere with backpressure which is determined by the source {@code Publisher}'s backpressure
      *  behavior.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param scheduler
@@ -13343,6 +13417,9 @@ public abstract class Flowable<T> implements Publisher<T> {
      * Returns a Flowable that emits those items emitted by source Publisher before a specified time runs
      * out.
      * <p>
+     * If time runs out before the {@code Flowable} completes normally, the {@code onComplete} event will be
+     * signaled on the default {@code computation} {@link Scheduler}.
+     * <p>
      * <img width="640" height="305" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/take.t.png" alt="">
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
@@ -13370,13 +13447,16 @@ public abstract class Flowable<T> implements Publisher<T> {
      * Returns a Flowable that emits those items emitted by source Publisher before a specified time (on a
      * specified Scheduler) runs out.
      * <p>
+     * If time runs out before the {@code Flowable} completes normally, the {@code onComplete} event will be
+     * signaled on the provided {@link Scheduler}.
+     * <p>
      * <img width="640" height="305" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/take.ts.png" alt="">
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator doesn't interfere with backpressure which is determined by the source {@code Publisher}'s backpressure
      *  behavior.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param time
@@ -13623,7 +13703,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  lead to {@code OutOfMemoryError} due to internal buffer bloat.
      *  Consider using {@link #takeLast(long, long, TimeUnit, Scheduler)} in this case.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param time
@@ -13657,7 +13737,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  lead to {@code OutOfMemoryError} due to internal buffer bloat.
      *  Consider using {@link #takeLast(long, long, TimeUnit, Scheduler)} in this case.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param time
@@ -13694,7 +13774,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  lead to {@code OutOfMemoryError} due to internal buffer bloat.
      *  Consider using {@link #takeLast(long, long, TimeUnit, Scheduler)} in this case.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param time
@@ -13852,7 +13932,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>This operator does not support backpressure as it uses time to control data flow.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param skipDuration
@@ -13919,7 +13999,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>This operator does not support backpressure as it uses time to control data flow.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param intervalDuration
@@ -14002,7 +14082,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>This operator does not support backpressure as it uses time to control data flow.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param timeout
@@ -14280,7 +14360,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  If any of the source {@code Publisher}s violate this, it <em>may</em> throw an
      *  {@code IllegalStateException} when the source {@code Publisher} completes.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param timeout
@@ -14315,7 +14395,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dd>The operator doesn't interfere with backpressure which is determined by the source {@code Publisher}'s backpressure
      *  behavior.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param timeout
@@ -15068,7 +15148,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dd>The operator doesn't interfere with backpressure which is determined by the source {@code Publisher}'s backpressure
      *  behavior.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param scheduler
@@ -15234,7 +15314,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  backpressure but have an unbounded inner buffer that <em>may</em> lead to {@code OutOfMemoryError}
      *  if left unconsumed.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param timespan
@@ -15271,7 +15351,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  backpressure but have an unbounded inner buffer that <em>may</em> lead to {@code OutOfMemoryError}
      *  if left unconsumed.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param timespan
@@ -15425,7 +15505,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  backpressure but have an unbounded inner buffer that <em>may</em> lead to {@code OutOfMemoryError}
      *  if left unconsumed.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param timespan
@@ -15462,7 +15542,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  time to control the creation of windows. The returned inner {@code Publisher}s honor
      *  backpressure and may hold up to {@code count} elements at most.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param timespan
@@ -15502,7 +15582,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  time to control the creation of windows. The returned inner {@code Publisher}s honor
      *  backpressure and may hold up to {@code count} elements at most.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param timespan
@@ -15544,7 +15624,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  time to control the creation of windows. The returned inner {@code Publisher}s honor
      *  backpressure and may hold up to {@code count} elements at most.</dd>
      *  <dt><b>Scheduler:</b></dt>
-     *  <dd>You specify which {@link Scheduler} this operator will use</dd>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
      * </dl>
      *
      * @param timespan

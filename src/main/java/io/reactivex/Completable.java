@@ -404,7 +404,7 @@ public abstract class Completable implements CompletableSource {
      * <p>
      * Note that even though {@link Publisher} appears to be a functional interface, it
      * is not recommended to implement it through a lambda as the specification requires
-     * state management not achievable with a stateless lambda.
+     * state management that is not achievable with a stateless lambda.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The returned {@code Completable} honors the backpressure of the downstream consumer
@@ -906,6 +906,28 @@ public abstract class Completable implements CompletableSource {
     @SchedulerSupport(SchedulerSupport.NONE)
     public final Completable andThen(CompletableSource next) {
         return concatWith(next);
+    }
+
+    /**
+     * Calls the specified converter function during assembly time and returns its resulting value.
+     * <p>
+     * This allows fluent conversion to any other type.
+     * <dl>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>{@code as} does not operate by default on a particular {@link Scheduler}.</dd>
+     * </dl>
+     *
+     * @param <R> the resulting object type
+     * @param converter the function that receives the current Completable instance and returns a value
+     * @return the converted value
+     * @throws NullPointerException if converter is null
+     * @since 2.1.7 - experimental
+     */
+    @Experimental
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.NONE)
+    public final <R> R as(@NonNull CompletableConverter<? extends R> converter) {
+        return ObjectHelper.requireNonNull(converter, "converter is null").apply(this);
     }
 
     /**
@@ -1686,11 +1708,11 @@ public abstract class Completable implements CompletableSource {
      * Completable source = Completable.complete().delay(1, TimeUnit.SECONDS);
      * CompositeDisposable composite = new CompositeDisposable();
      *
-     * class ResourceCompletableObserver implements CompletableObserver, Disposable {
+     * DisposableCompletableObserver ds = new DisposableCompletableObserver() {
      *     // ...
-     * }
+     * };
      *
-     * composite.add(source.subscribeWith(new ResourceCompletableObserver()));
+     * composite.add(source.subscribeWith(ds));
      * </code></pre>
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
