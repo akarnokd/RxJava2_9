@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/RxJava2_9.iml" filepath="$PROJECT_DIR$/RxJava2_9.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/rxjava2_9.iml" filepath="$PROJECT_DIR$/.idea/modules/rxjava2_9.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/rxjava2_9_jmh.iml" filepath="$PROJECT_DIR$/.idea/modules/rxjava2_9_jmh.iml" group="rxjava2_9" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/rxjava2_9_main.iml" filepath="$PROJECT_DIR$/.idea/modules/rxjava2_9_main.iml" group="rxjava2_9" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/rxjava2_9_test.iml" filepath="$PROJECT_DIR$/.idea/modules/rxjava2_9_test.iml" group="rxjava2_9" />
     </modules>
   </component>
 </project>

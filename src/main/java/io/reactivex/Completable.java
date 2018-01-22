@@ -451,10 +451,23 @@ public abstract class Completable implements CompletableSource {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code mergeArray} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dd>If any of the source {@code CompletableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Completable} terminates with that {@code Throwable} and all other source {@code CompletableSource}s are cancelled.
+     *  If more than one {@code CompletableSource} signals an error, the resulting {@code Completable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Completable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeArrayDelayError(CompletableSource...)} to merge sources and terminate only when all source {@code CompletableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      * @param sources the iterable sequence of sources.
      * @return the new Completable instance
      * @throws NullPointerException if sources is null
+     * @see #mergeArrayDelayError(CompletableSource...)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -475,10 +488,24 @@ public abstract class Completable implements CompletableSource {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code CompletableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Completable} terminates with that {@code Throwable} and all other source {@code CompletableSource}s are cancelled.
+     *  If more than one {@code CompletableSource} signals an error, the resulting {@code Completable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Completable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Iterable)} to merge sources and terminate only when all source {@code CompletableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      * @param sources the iterable sequence of sources.
      * @return the new Completable instance
      * @throws NullPointerException if sources is null
+     * @see #mergeDelayError(Iterable)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -496,10 +523,23 @@ public abstract class Completable implements CompletableSource {
      *  and expects the other {@code Publisher} to honor it as well.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dd>If any of the source {@code CompletableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Completable} terminates with that {@code Throwable} and all other source {@code CompletableSource}s are cancelled.
+     *  If more than one {@code CompletableSource} signals an error, the resulting {@code Completable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Completable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Publisher)} to merge sources and terminate only when all source {@code CompletableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      * @param sources the iterable sequence of sources.
      * @return the new Completable instance
      * @throws NullPointerException if sources is null
+     * @see #mergeDelayError(Publisher)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -517,12 +557,25 @@ public abstract class Completable implements CompletableSource {
      *  and expects the other {@code Publisher} to honor it as well.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dd>If any of the source {@code CompletableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Completable} terminates with that {@code Throwable} and all other source {@code CompletableSource}s are cancelled.
+     *  If more than one {@code CompletableSource} signals an error, the resulting {@code Completable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Completable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Publisher, int)} to merge sources and terminate only when all source {@code CompletableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      * @param sources the iterable sequence of sources.
      * @param maxConcurrency the maximum number of concurrent subscriptions
      * @return the new Completable instance
      * @throws NullPointerException if sources is null
      * @throws IllegalArgumentException if maxConcurrency is less than 1
+     * @see #mergeDelayError(Publisher, int)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -1055,6 +1108,10 @@ public abstract class Completable implements CompletableSource {
      * @param other the other Completable, not null
      * @return the new Completable which subscribes to this and then the other Completable
      * @throws NullPointerException if other is null
+     * @see #andThen(MaybeSource)
+     * @see #andThen(ObservableSource)
+     * @see #andThen(SingleSource)
+     * @see #andThen(Publisher)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -1130,6 +1187,7 @@ public abstract class Completable implements CompletableSource {
      * @param onComplete the callback to call when this emits an onComplete event
      * @return the new Completable instance
      * @throws NullPointerException if onComplete is null
+     * @see #doFinally(Action)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -1167,6 +1225,7 @@ public abstract class Completable implements CompletableSource {
      * @param onError the error callback
      * @return the new Completable instance
      * @throws NullPointerException if onError is null
+     * @see #doFinally(Action)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -1247,13 +1306,14 @@ public abstract class Completable implements CompletableSource {
 
     /**
      * Returns a Completable instance that calls the given onTerminate callback just before this Completable
-     * completes normally or with an exception
+     * completes normally or with an exception.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code doOnTerminate} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
      * @param onTerminate the callback to call just before this Completable terminates
      * @return the new Completable instance
+     * @see #doFinally(Action)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -1265,13 +1325,14 @@ public abstract class Completable implements CompletableSource {
 
     /**
      * Returns a Completable instance that calls the given onTerminate callback after this Completable
-     * completes normally or with an exception
+     * completes normally or with an exception.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code doAfterTerminate} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
      * @param onAfterTerminate the callback to call after this Completable terminates
      * @return the new Completable instance
+     * @see #doFinally(Action)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -1546,6 +1607,28 @@ public abstract class Completable implements CompletableSource {
     }
 
     /**
+     * Returns a Completable that when this Completable emits an error, retries at most times
+     * or until the predicate returns false, whichever happens first and emitting the last error.
+     * <dl>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>{@code retry} does not operate by default on a particular {@link Scheduler}.</dd>
+     * </dl>
+     * @param times the number of times the returned Completable should retry this Completable
+     * @param predicate the predicate that is called with the latest throwable and should return
+     * true to indicate the returned Completable should resubscribe to this Completable.
+     * @return the new Completable instance
+     * @throws NullPointerException if predicate is null
+     * @throws IllegalArgumentException if times is negative
+     * @since 2.1.8 - experimental
+     */
+    @Experimental
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.NONE)
+    public final Completable retry(long times, Predicate<? super Throwable> predicate) {
+        return fromPublisher(toFlowable().retry(times, predicate));
+    }
+
+    /**
      * Returns a Completable that when this Completable emits an error, calls the given predicate with
      * the latest exception to decide whether to resubscribe to this or not.
      * <dl>
@@ -1567,6 +1650,31 @@ public abstract class Completable implements CompletableSource {
      * Returns a Completable which given a Publisher and when this Completable emits an error, delivers
      * that error through a Flowable and the Publisher should signal a value indicating a retry in response
      * or a terminal event indicating a termination.
+     * <p>
+     * Note that the inner {@code Publisher} returned by the handler function should signal
+     * either {@code onNext}, {@code onError} or {@code onComplete} in response to the received
+     * {@code Throwable} to indicate the operator should retry or terminate. If the upstream to
+     * the operator is asynchronous, signalling onNext followed by onComplete immediately may
+     * result in the sequence to be completed immediately. Similarly, if this inner
+     * {@code Publisher} signals {@code onError} or {@code onComplete} while the upstream is
+     * active, the sequence is terminated with the same signal immediately.
+     * <p>
+     * The following example demonstrates how to retry an asynchronous source with a delay:
+     * <pre><code>
+     * Completable.timer(1, TimeUnit.SECONDS)
+     *     .doOnSubscribe(s -&gt; System.out.println("subscribing"))
+     *     .doOnComplete(() -&gt; { throw new RuntimeException(); })
+     *     .retryWhen(errors -&gt; {
+     *         AtomicInteger counter = new AtomicInteger();
+     *         return errors
+     *                   .takeWhile(e -&gt; counter.getAndIncrement() != 3)
+     *                   .flatMap(e -&gt; {
+     *                       System.out.println("delay retry by " + counter.get() + " second(s)");
+     *                       return Flowable.timer(counter.get(), TimeUnit.SECONDS);
+     *                   });
+     *     })
+     *     .blockingAwait();
+     * </code></pre>
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code retryWhen} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -2029,7 +2137,7 @@ public abstract class Completable implements CompletableSource {
 
     /**
      * Returns a Completable which makes sure when a subscriber cancels the subscription, the
-     * dispose is called on the specified scheduler
+     * dispose is called on the specified scheduler.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code unsubscribeOn} calls dispose() of the upstream on the {@link Scheduler} you specify.</dd>

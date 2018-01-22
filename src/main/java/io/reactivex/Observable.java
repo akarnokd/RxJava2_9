@@ -2635,6 +2635,19 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code ObservableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Observable} terminates with that {@code Throwable} and all other source {@code ObservableSource}s are cancelled.
+     *  If more than one {@code ObservableSource} signals an error, the resulting {@code Observable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Observable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Iterable, int, int)} to merge sources and terminate only when all source {@code ObservableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -2649,6 +2662,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * @throws IllegalArgumentException
      *             if {@code maxConcurrent} is less than or equal to 0
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(Iterable, int, int)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -2668,6 +2682,19 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code mergeArray} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code ObservableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Observable} terminates with that {@code Throwable} and all other source {@code ObservableSource}s are cancelled.
+     *  If more than one {@code ObservableSource} signals an error, the resulting {@code Observable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Observable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeArrayDelayError(int, int, ObservableSource...)} to merge sources and terminate only when all source {@code ObservableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -2682,6 +2709,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * @throws IllegalArgumentException
      *             if {@code maxConcurrent} is less than or equal to 0
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeArrayDelayError(int, int, ObservableSource...)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -2700,6 +2728,19 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code ObservableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Observable} terminates with that {@code Throwable} and all other source {@code ObservableSource}s are cancelled.
+     *  If more than one {@code ObservableSource} signals an error, the resulting {@code Observable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Observable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Iterable)} to merge sources and terminate only when all source {@code ObservableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -2708,6 +2749,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * @return an Observable that emits items that are the result of flattening the items emitted by the
      *         ObservableSources in the Iterable
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(Iterable)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -2727,6 +2769,19 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code ObservableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Observable} terminates with that {@code Throwable} and all other source {@code ObservableSource}s are cancelled.
+     *  If more than one {@code ObservableSource} signals an error, the resulting {@code Observable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Observable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Iterable, int)} to merge sources and terminate only when all source {@code ObservableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -2739,6 +2794,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * @throws IllegalArgumentException
      *             if {@code maxConcurrent} is less than or equal to 0
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(Iterable, int)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -2758,6 +2814,19 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code ObservableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Observable} terminates with that {@code Throwable} and all other source {@code ObservableSource}s are cancelled.
+     *  If more than one {@code ObservableSource} signals an error, the resulting {@code Observable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Observable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(ObservableSource)} to merge sources and terminate only when all source {@code ObservableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -2766,6 +2835,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * @return an Observable that emits items that are the result of flattening the ObservableSources emitted by the
      *         {@code source} ObservableSource
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(ObservableSource)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -2787,6 +2857,19 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code ObservableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Observable} terminates with that {@code Throwable} and all other source {@code ObservableSource}s are cancelled.
+     *  If more than one {@code ObservableSource} signals an error, the resulting {@code Observable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Observable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(ObservableSource, int)} to merge sources and terminate only when all source {@code ObservableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -2800,6 +2883,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      *             if {@code maxConcurrent} is less than or equal to 0
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
      * @since 1.1.0
+     * @see #mergeDelayError(ObservableSource, int)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -2820,6 +2904,19 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code ObservableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Observable} terminates with that {@code Throwable} and all other source {@code ObservableSource}s are cancelled.
+     *  If more than one {@code ObservableSource} signals an error, the resulting {@code Observable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Observable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(ObservableSource, ObservableSource)} to merge sources and terminate only when all source {@code ObservableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -2829,6 +2926,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      *            an ObservableSource to be merged
      * @return an Observable that emits all of the items emitted by the source ObservableSources
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(ObservableSource, ObservableSource)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -2849,6 +2947,19 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code ObservableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Observable} terminates with that {@code Throwable} and all other source {@code ObservableSource}s are cancelled.
+     *  If more than one {@code ObservableSource} signals an error, the resulting {@code Observable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Observable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(ObservableSource, ObservableSource, ObservableSource)} to merge sources and terminate only when all source {@code ObservableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -2860,6 +2971,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      *            an ObservableSource to be merged
      * @return an Observable that emits all of the items emitted by the source ObservableSources
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(ObservableSource, ObservableSource, ObservableSource)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -2881,6 +2993,19 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code ObservableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Observable} terminates with that {@code Throwable} and all other source {@code ObservableSource}s are cancelled.
+     *  If more than one {@code ObservableSource} signals an error, the resulting {@code Observable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Observable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(ObservableSource, ObservableSource, ObservableSource, ObservableSource)} to merge sources and terminate only when all source {@code ObservableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -2894,6 +3019,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      *            an ObservableSource to be merged
      * @return an Observable that emits all of the items emitted by the source ObservableSources
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(ObservableSource, ObservableSource, ObservableSource, ObservableSource)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -2918,6 +3044,19 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code mergeArray} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code ObservableSource}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Observable} terminates with that {@code Throwable} and all other source {@code ObservableSource}s are cancelled.
+     *  If more than one {@code ObservableSource} signals an error, the resulting {@code Observable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Observable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeArrayDelayError(ObservableSource...)} to merge sources and terminate only when all source {@code ObservableSource}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -2925,6 +3064,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      *            the array of ObservableSources
      * @return an Observable that emits all of the items emitted by the ObservableSources in the Array
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeArrayDelayError(ObservableSource...)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -6121,7 +6261,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * one at a time and emits their values in order
      * while delaying any error from either this or any of the inner ObservableSources
      * till all of them terminate.
-     *
+     * <p>
+     * <img width="640" height="347" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatMapDelayError.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code concatMapDelayError} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -6142,7 +6283,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * one at a time and emits their values in order
      * while delaying any error from either this or any of the inner ObservableSources
      * till all of them terminate.
-     *
+     * <p>
+     * <img width="640" height="347" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatMapDelayError.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code concatMapDelayError} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -6181,6 +6323,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Eager concatenation means that once a subscriber subscribes, this operator subscribes to all of the
      * source ObservableSources. The operator buffers the values emitted by these ObservableSources and then drains them in
      * order, each one after the previous one completes.
+     * <p>
+     * <img width="640" height="360" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatMapEager.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>This method does not operate by default on a particular {@link Scheduler}.</dd>
@@ -6204,6 +6348,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Eager concatenation means that once a subscriber subscribes, this operator subscribes to all of the
      * source ObservableSources. The operator buffers the values emitted by these ObservableSources and then drains them in
      * order, each one after the previous one completes.
+     * <p>
+     * <img width="640" height="360" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatMapEager.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>This method does not operate by default on a particular {@link Scheduler}.</dd>
@@ -6233,6 +6379,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Eager concatenation means that once a subscriber subscribes, this operator subscribes to all of the
      * source ObservableSources. The operator buffers the values emitted by these ObservableSources and then drains them in
      * order, each one after the previous one completes.
+     * <p>
+     * <img width="640" height="390" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatMapEagerDelayError.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>This method does not operate by default on a particular {@link Scheduler}.</dd>
@@ -6260,6 +6408,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Eager concatenation means that once a subscriber subscribes, this operator subscribes to all of the
      * source ObservableSources. The operator buffers the values emitted by these ObservableSources and then drains them in
      * order, each one after the previous one completes.
+     * <p>
+     * <img width="640" height="390" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatMapEagerDelayError.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>This method does not operate by default on a particular {@link Scheduler}.</dd>
@@ -6290,6 +6440,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Maps each element of the upstream Observable into CompletableSources, subscribes to them one at a time in
      * order and waits until the upstream and all CompletableSources complete.
+     * <p>
+     * <img width="640" height="505" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatMapCompletable.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code concatMapCompletable} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -6310,6 +6462,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Maps each element of the upstream Observable into CompletableSources, subscribes to them one at a time in
      * order and waits until the upstream and all CompletableSources complete.
+     * <p>
+     * <img width="640" height="505" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatMapCompletable.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code concatMapCompletable} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -6336,6 +6490,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Returns an Observable that concatenate each item emitted by the source ObservableSource with the values in an
      * Iterable corresponding to that item that is generated by a selector.
+     * <p>
+     * <img width="640" height="275" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatMapIterable.o.png" alt="">
      *
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
@@ -6361,6 +6517,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Returns an Observable that concatenate each item emitted by the source ObservableSource with the values in an
      * Iterable corresponding to that item that is generated by a selector.
+     * <p>
+     * <img width="640" height="275" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatMapIterable.o.png" alt="">
      *
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
@@ -6989,6 +7147,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Calls the specified consumer with the current item after this item has been emitted to the downstream.
      * <p>Note that the {@code onAfterNext} action is shared between subscriptions and as such
      * should be thread-safe.
+     * <p>
+     * <img width="640" height="360" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/doAfterNext.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code doAfterNext} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7038,6 +7198,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * is executed once per subscription.
      * <p>Note that the {@code onFinally} action is shared between subscriptions and as such
      * should be thread-safe.
+     * <p>
+     * <img width="640" height="281" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/doFinally.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code doFinally} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7278,7 +7440,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Modifies the source ObservableSource so that it invokes an action when it calls {@code onComplete} or
      * {@code onError}.
      * <p>
-     * <img width="640" height="305" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/doOnTerminate.png" alt="">
+     * <img width="640" height="327" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/doOnTerminate.o.png" alt="">
      * <p>
      * This differs from {@code doAfterTerminate} in that this happens <em>before</em> the {@code onComplete} or
      * {@code onError} notification.
@@ -7306,7 +7468,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns a Maybe that emits the single item at a specified index in a sequence of emissions from
      * this Observable or completes if this Observable signals fewer elements than index.
      * <p>
-     * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/elementAt.2m.png" alt="">
+     * <img width="640" height="363" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/elementAt.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code elementAt} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7333,7 +7495,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns a Single that emits the item found at a specified index in a sequence of emissions from
      * this Observable, or a default item if that index is out of range.
      * <p>
-     * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/elementAt.2s.png" alt="">
+     * <img width="640" height="353" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/elementAtDefault.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code elementAt} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7363,7 +7525,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns a Single that emits the item found at a specified index in a sequence of emissions from this Observable
      * or signals a {@link NoSuchElementException} if this Observable signals fewer elements than index.
      * <p>
-     * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/elementAt.2s.png" alt="">
+     * <img width="640" height="362" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/elementAtOrError.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code elementAtOrError} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7413,7 +7575,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns a Maybe that emits only the very first item emitted by the source ObservableSource, or
      * completes if the source ObservableSource is empty.
      * <p>
-     * <img width="640" height="237" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/firstElement.m.png" alt="">
+     * <img width="640" height="286" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/firstElement.m.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code firstElement} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7453,7 +7615,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns a Single that emits only the very first item emitted by this Observable or
      * signals a {@link NoSuchElementException} if this Observable is empty.
      * <p>
-     * <img width="640" height="305" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/first.2.png" alt="">
+     * <img width="640" height="434" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/firstOrError.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code firstOrError} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7499,7 +7661,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * by the source ObservableSource, where that function returns an ObservableSource, and then merging those resulting
      * ObservableSources and emitting the results of this merger.
      * <p>
-     * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMap.png" alt="">
+     * <img width="640" height="356" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMapDelayError.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code flatMap} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7528,8 +7690,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * by the source ObservableSource, where that function returns an ObservableSource, and then merging those resulting
      * ObservableSources and emitting the results of this merger, while limiting the maximum number of concurrent
      * subscriptions to these ObservableSources.
-     * <!-- <p> -->
-     * <!-- <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMap.png" alt=""> -->
+     * <p>
+     * <img width="640" height="441" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMapMaxConcurrency.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code flatMap} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7561,8 +7723,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * by the source ObservableSource, where that function returns an ObservableSource, and then merging those resulting
      * ObservableSources and emitting the results of this merger, while limiting the maximum number of concurrent
      * subscriptions to these ObservableSources.
-     * <!-- <p> -->
-     * <!-- <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMap.png" alt=""> -->
+     * <p>
+     * <img width="640" height="441" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMapMaxConcurrency.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code flatMap} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7643,8 +7805,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that applies a function to each item emitted or notification raised by the source
      * ObservableSource and then flattens the ObservableSources returned from these functions and emits the resulting items,
      * while limiting the maximum number of concurrent subscriptions to these ObservableSources.
-     * <!-- <p> -->
-     * <!-- <img width="640" height="410" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/mergeMap.nce.png" alt=""> -->
+     * <p>
+     * <img width="640" height="410" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/mergeMap.nce.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code flatMap} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7685,8 +7847,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * by the source ObservableSource, where that function returns an ObservableSource, and then merging those resulting
      * ObservableSources and emitting the results of this merger, while limiting the maximum number of concurrent
      * subscriptions to these ObservableSources.
-     * <!-- <p> -->
-     * <!-- <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMap.png" alt=""> -->
+     * <p>
+     * <img width="640" height="441" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMapMaxConcurrency.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code flatMap} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7777,8 +7939,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that emits the results of a specified function to the pair of values emitted by the
      * source ObservableSource and a specified collection ObservableSource, while limiting the maximum number of concurrent
      * subscriptions to these ObservableSources.
-     * <!-- <p> -->
-     * <!-- <img width="640" height="390" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/mergeMap.r.png" alt=""> -->
+     * <p>
+     * <img width="640" height="390" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/mergeMap.r.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code flatMap} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7814,8 +7976,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that emits the results of a specified function to the pair of values emitted by the
      * source ObservableSource and a specified collection ObservableSource, while limiting the maximum number of concurrent
      * subscriptions to these ObservableSources.
-     * <!-- <p> -->
-     * <!-- <img width="640" height="390" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/mergeMap.r.png" alt=""> -->
+     * <p>
+     * <img width="640" height="390" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/mergeMap.r.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code flatMap} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7855,8 +8017,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that emits the results of a specified function to the pair of values emitted by the
      * source ObservableSource and a specified collection ObservableSource, while limiting the maximum number of concurrent
      * subscriptions to these ObservableSources.
-     * <!-- <p> -->
-     * <!-- <img width="640" height="390" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/mergeMap.r.png" alt=""> -->
+     * <p>
+     * <img width="640" height="390" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/mergeMap.r.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code flatMap} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7888,6 +8050,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Maps each element of the upstream Observable into CompletableSources, subscribes to them and
      * waits until the upstream and all CompletableSources complete.
+     * <p>
+     * <img width="640" height="424" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMapCompletable.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code flatMapCompletable} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7904,6 +8068,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Maps each element of the upstream Observable into CompletableSources, subscribes to them and
      * waits until the upstream and all CompletableSources complete, optionally delaying all errors.
+     * <p>
+     * <img width="640" height="361" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMapCompletableDelayError.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code flatMapCompletable} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7924,7 +8090,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that merges each item emitted by the source ObservableSource with the values in an
      * Iterable corresponding to that item that is generated by a selector.
      * <p>
-     * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMapIterable.o.png" alt="">
+     * <img width="640" height="343" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMapIterable.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code flatMapIterable} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7950,7 +8116,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that emits the results of applying a function to the pair of values from the source
      * ObservableSource and an Iterable corresponding to that item that is generated by a selector.
      * <p>
-     * <img width="640" height="390" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMapIterable.o.r.png" alt="">
+     * <img width="640" height="410" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/flatMapIterable.o.r.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code flatMapIterable} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -8066,6 +8232,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Subscribes to the {@link ObservableSource} and receives notifications for each element.
      * <p>
+     * <img width="640" height="264" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/forEach.o.png" alt="">
+     * <p>
      * Alias to {@link #subscribe(Consumer)}
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
@@ -8089,6 +8257,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Subscribes to the {@link ObservableSource} and receives notifications for each element until the
      * onNext Predicate returns false.
+     * <p>
+     * <img width="640" height="272" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/forEachWhile.o.png" alt="">
      * <p>
      * If the Observable emits an error, it is wrapped into an
      * {@link io.reactivex.exceptions.OnErrorNotImplementedException OnErrorNotImplementedException}
@@ -8422,6 +8592,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <p>Allows hiding extra features such as {@link io.reactivex.subjects.Subject}'s
      * {@link Observer} methods or preventing certain identity-based
      * optimizations (fusion).
+     * <p>
+     * <img width="640" height="283" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/hide.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code hide} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -8569,7 +8741,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns a Single that emits only the last item emitted by this Observable or
      * signals a {@link NoSuchElementException} if this Observable is empty.
      * <p>
-     * <img width="640" height="305" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/last.2.png" alt="">
+     * <img width="640" height="236" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/lastOrError.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code lastOrError} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -8882,7 +9054,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Instructs an ObservableSource to emit an item (returned by a specified function) rather than invoking
      * {@link Observer#onError onError} if it encounters an error.
      * <p>
-     * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/onErrorReturn.png" alt="">
+     * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/onErrorReturn.o.png" alt="">
      * <p>
      * By default, when an ObservableSource encounters an error that prevents it from emitting the expected item to
      * its {@link Observer}, the ObservableSource invokes its Observer's {@code onError} method, and then quits
@@ -8915,7 +9087,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Instructs an ObservableSource to emit an item (returned by a specified function) rather than invoking
      * {@link Observer#onError onError} if it encounters an error.
      * <p>
-     * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/onErrorReturn.png" alt="">
+     * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/onErrorReturnItem.o.png" alt="">
      * <p>
      * By default, when an ObservableSource encounters an error that prevents it from emitting the expected item to
      * its {@link Observer}, the ObservableSource invokes its Observer's {@code onError} method, and then quits
@@ -8986,11 +9158,13 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Nulls out references to the upstream producer and downstream Observer if
      * the sequence is terminated or downstream calls dispose().
+     * <p>
+     * <img width="640" height="246" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/onTerminateDetach.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code onTerminateDetach} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
-     * @return an Observable which out references to the upstream producer and downstream Observer if
+     * @return an Observable which nulls out references to the upstream producer and downstream Observer if
      * the sequence is terminated or downstream calls dispose()
      * @since 2.0
      */
@@ -9025,7 +9199,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that emits the results of invoking a specified selector on items emitted by a
      * {@link ConnectableObservable} that shares a single subscription to the underlying sequence.
      * <p>
-     * <img width="640" height="510" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/publishConnect.f.png" alt="">
+     * <img width="640" height="647" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/publishFunction.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code publish} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -9084,7 +9258,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * emitted by an ObservableSource into the same function, and so on until all items have been emitted by the
      * source ObservableSource, emitting the final result from the final call to your function as its sole item.
      * <p>
-     * <img width="640" height="325" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/reduceSeed.2.png" alt="">
+     * <img width="640" height="325" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/reduceSeed.o.png" alt="">
      * <p>
      * This technique, which is called "reduce" here, is sometimes called "aggregate," "fold," "accumulate,"
      * "compress," or "inject" in other programming contexts. Groovy, for instance, has an {@code inject} method
@@ -9139,7 +9313,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * and so on until all items have been emitted by the source ObservableSource, emitting the final result
      * from the final call to your function as its sole item.
      * <p>
-     * <img width="640" height="325" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/reduceSeed.2.png" alt="">
+     * <img width="640" height="325" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/reduceWith.o.png" alt="">
      * <p>
      * This technique, which is called "reduce" here, is sometimes called "aggregate," "fold," "accumulate,"
      * "compress," or "inject" in other programming contexts. Groovy, for instance, has an {@code inject} method
@@ -9171,7 +9345,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Returns an Observable that repeats the sequence of items emitted by the source ObservableSource indefinitely.
      * <p>
-     * <img width="640" height="309" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/repeat.o.png" alt="">
+     * <img width="640" height="287" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/repeatInf.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code repeat} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -9190,7 +9364,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that repeats the sequence of items emitted by the source ObservableSource at most
      * {@code count} times.
      * <p>
-     * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/repeat.on.png" alt="">
+     * <img width="640" height="336" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/repeatCount.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code repeat} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -9221,15 +9395,16 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that repeats the sequence of items emitted by the source ObservableSource until
      * the provided stop function returns true.
      * <p>
-     * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/repeat.on.png" alt="">
+     * <img width="640" height="262" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/repeatUntil.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code repeatUntil} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
      *
      * @param stop
-     *                a boolean supplier that is called when the current Observable completes and unless it returns
-     *                false, the current Observable is resubscribed
+     *                a boolean supplier that is called when the current Observable completes;
+     *                if it returns true, the returned Observable completes; if it returns false,
+     *                the upstream Observable is resubscribed.
      * @return the new Observable instance
      * @throws NullPointerException
      *             if {@code stop} is null
@@ -9274,7 +9449,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * ObservableSource resembles an ordinary ObservableSource, except that it does not begin emitting items when it is
      * subscribed to, but only when its {@code connect} method is called.
      * <p>
-     * <img width="640" height="515" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.png" alt="">
+     * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>This version of {@code replay} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -9294,7 +9469,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that emits items that are the results of invoking a specified selector on the items
      * emitted by a {@link ConnectableObservable} that shares a single subscription to the source ObservableSource.
      * <p>
-     * <img width="640" height="450" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.f.png" alt="">
+     * <img width="640" height="449" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.f.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>This version of {@code replay} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -9321,7 +9496,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * emitted by a {@link ConnectableObservable} that shares a single subscription to the source ObservableSource,
      * replaying {@code bufferSize} notifications.
      * <p>
-     * <img width="640" height="440" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.fn.png" alt="">
+     * <img width="640" height="391" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.fn.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>This version of {@code replay} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -9352,7 +9527,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * emitted by a {@link ConnectableObservable} that shares a single subscription to the source ObservableSource,
      * replaying no more than {@code bufferSize} items that were emitted within a specified time window.
      * <p>
-     * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.fnt.png" alt="">
+     * <img width="640" height="350" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.fnt.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>This version of {@code replay} operates by default on the {@code computation} {@link Scheduler}.</dd>
@@ -9386,7 +9561,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * emitted by a {@link ConnectableObservable} that shares a single subscription to the source ObservableSource,
      * replaying no more than {@code bufferSize} items that were emitted within a specified time window.
      * <p>
-     * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.fnts.png" alt="">
+     * <img width="640" height="328" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.fnts.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
@@ -9429,7 +9604,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * emitted by a {@link ConnectableObservable} that shares a single subscription to the source ObservableSource,
      * replaying a maximum of {@code bufferSize} items.
      * <p>
-     * <img width="640" height="440" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.fns.png" alt="">
+     * <img width="640" height="362" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.fns.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
@@ -9464,7 +9639,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * emitted by a {@link ConnectableObservable} that shares a single subscription to the source ObservableSource,
      * replaying all items that were emitted within a specified time window.
      * <p>
-     * <img width="640" height="435" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.ft.png" alt="">
+     * <img width="640" height="393" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.ft.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>This version of {@code replay} operates by default on the {@code computation} {@link Scheduler}.</dd>
@@ -9495,7 +9670,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * emitted by a {@link ConnectableObservable} that shares a single subscription to the source ObservableSource,
      * replaying all items that were emitted within a specified time window.
      * <p>
-     * <img width="640" height="440" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.fts.png" alt="">
+     * <img width="640" height="366" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.fts.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
@@ -9530,7 +9705,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that emits items that are the results of invoking a specified selector on items
      * emitted by a {@link ConnectableObservable} that shares a single subscription to the source ObservableSource.
      * <p>
-     * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.fs.png" alt="">
+     * <img width="640" height="406" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.fs.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
@@ -9563,7 +9738,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * an ordinary ObservableSource, except that it does not begin emitting items when it is subscribed to, but only
      * when its {@code connect} method is called.
      * <p>
-     * <img width="640" height="515" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.n.png" alt="">
+     * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.n.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>This version of {@code replay} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -9588,7 +9763,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * ObservableSource resembles an ordinary ObservableSource, except that it does not begin emitting items when it is
      * subscribed to, but only when its {@code connect} method is called.
      * <p>
-     * <img width="640" height="515" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.nt.png" alt="">
+     * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.nt.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>This version of {@code replay} operates by default on the {@code computation} {@link Scheduler}.</dd>
@@ -9617,7 +9792,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Connectable ObservableSource resembles an ordinary ObservableSource, except that it does not begin emitting items
      * when it is subscribed to, but only when its {@code connect} method is called.
      * <p>
-     * <img width="640" height="515" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.nts.png" alt="">
+     * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.nts.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
@@ -9653,7 +9828,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * an ordinary ObservableSource, except that it does not begin emitting items when it is subscribed to, but only
      * when its {@code connect} method is called.
      * <p>
-     * <img width="640" height="515" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.ns.png" alt="">
+     * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.ns.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
@@ -9680,7 +9855,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * resembles an ordinary ObservableSource, except that it does not begin emitting items when it is subscribed to,
      * but only when its {@code connect} method is called.
      * <p>
-     * <img width="640" height="515" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.t.png" alt="">
+     * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.t.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>This version of {@code replay} operates by default on the {@code computation} {@link Scheduler}.</dd>
@@ -9706,7 +9881,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * resembles an ordinary ObservableSource, except that it does not begin emitting items when it is subscribed to,
      * but only when its {@code connect} method is called.
      * <p>
-     * <img width="640" height="515" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.ts.png" alt="">
+     * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.ts.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
@@ -9736,7 +9911,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * {@link Scheduler}. A Connectable ObservableSource resembles an ordinary ObservableSource, except that it does not
      * begin emitting items when it is subscribed to, but only when its {@code connect} method is called.
      * <p>
-     * <img width="640" height="515" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.s.png" alt="">
+     * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.s.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
@@ -9787,7 +9962,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that mirrors the source ObservableSource, resubscribing to it if it calls {@code onError}
      * and the predicate returns true for that specific exception and retry count.
      * <p>
-     * <img width="640" height="315" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/retry.png" alt="">
+     * <img width="640" height="235" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/retry.o.ne.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code retry} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -9812,7 +9987,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that mirrors the source ObservableSource, resubscribing to it if it calls {@code onError}
      * up to a specified number of retries.
      * <p>
-     * <img width="640" height="315" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/retry.png" alt="">
+     * <img width="640" height="325" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/retry.o.n.png" alt="">
      * <p>
      * If the source ObservableSource calls {@link Observer#onError}, this method will resubscribe to the source
      * ObservableSource for a maximum of {@code count} resubscriptions rather than propagating the
@@ -9841,7 +10016,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Retries at most times or until the predicate returns false, whichever happens first.
      * <p>
-     * <img width="640" height="315" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/retry.png" alt="">
+     * <img width="640" height="269" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/retry.o.nfe.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code retry} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -9864,7 +10039,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Retries the current Observable if the predicate returns true.
      * <p>
-     * <img width="640" height="315" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/retry.png" alt="">
+     * <img width="640" height="248" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/retry.o.e.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code retry} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -9882,7 +10057,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Retries until the given stop function returns true.
      * <p>
-     * <img width="640" height="315" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/retry.png" alt="">     * <dl>
+     * <img width="640" height="261" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/retryUntil.o.png" alt="">
+     * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code retryUntil} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
@@ -9905,19 +10081,19 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * resubscribe to the source ObservableSource.
      * <p>
      * <img width="640" height="430" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/retryWhen.f.png" alt="">
-     *
+     * <p>
      * Example:
      *
      * This retries 3 times, each time incrementing the number of seconds it waits.
      *
      * <pre><code>
-     *  ObservableSource.create((Observer&lt;? super String&gt; s) -&gt; {
+     *  Observable.create((ObservableEmitter&lt;? super String&gt; s) -&gt; {
      *      System.out.println("subscribing");
      *      s.onError(new RuntimeException("always fails"));
      *  }).retryWhen(attempts -&gt; {
      *      return attempts.zipWith(Observable.range(1, 3), (n, i) -&gt; i).flatMap(i -&gt; {
      *          System.out.println("delay retry by " + i + " second(s)");
-     *          return ObservableSource.timer(i, TimeUnit.SECONDS);
+     *          return Observable.timer(i, TimeUnit.SECONDS);
      *      });
      *  }).blockingForEach(System.out::println);
      * </code></pre>
@@ -9933,6 +10109,31 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * delay retry by 3 second(s)
      * subscribing
      * } </pre>
+     * <p>
+     * Note that the inner {@code ObservableSource} returned by the handler function should signal
+     * either {@code onNext}, {@code onError} or {@code onComplete} in response to the received
+     * {@code Throwable} to indicate the operator should retry or terminate. If the upstream to
+     * the operator is asynchronous, signalling onNext followed by onComplete immediately may
+     * result in the sequence to be completed immediately. Similarly, if this inner
+     * {@code ObservableSource} signals {@code onError} or {@code onComplete} while the upstream is
+     * active, the sequence is terminated with the same signal immediately.
+     * <p>
+     * The following example demonstrates how to retry an asynchronous source with a delay:
+     * <pre><code>
+     * Observable.timer(1, TimeUnit.SECONDS)
+     *     .doOnSubscribe(s -&gt; System.out.println("subscribing"))
+     *     .map(v -&gt; { throw new RuntimeException(); })
+     *     .retryWhen(errors -&gt; {
+     *         AtomicInteger counter = new AtomicInteger();
+     *         return errors
+     *                   .takeWhile(e -&gt; counter.getAndIncrement() != 3)
+     *                   .flatMap(e -&gt; {
+     *                       System.out.println("delay retry by " + counter.get() + " second(s)");
+     *                       return Observable.timer(counter.get(), TimeUnit.SECONDS);
+     *                   });
+     *     })
+     *     .blockingSubscribe(System.out::println, System.out::println);
+     * </code></pre>
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code retryWhen} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -10298,7 +10499,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <p>
      * This is an alias for {@link #publish()}.{@link ConnectableObservable#refCount()}.
      * <p>
-     * <img width="640" height="510" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/publishRefCount.png" alt="">
+     * <img width="640" height="510" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/publishRefCount.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code share} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -11166,7 +11367,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * The resulting ObservableSource completes if both the upstream ObservableSource and the last inner SingleSource, if any, complete.
      * If the upstream ObservableSource signals an onError, the inner SingleSource is disposed and the error delivered in-sequence.
      * <p>
-     * <img width="640" height="350" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/switchMap.png" alt="">
+     * <img width="640" height="531" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/switchMapSingle.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code switchMapSingle} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -11197,7 +11398,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * If the upstream ObservableSource signals an onError, the termination of the last inner SingleSource will emit that error as is
      * or wrapped into a CompositeException along with the other possible errors the former inner SingleSources signalled.
      * <p>
-     * <img width="640" height="350" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/switchMap.png" alt="">
+     * <img width="640" height="467" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/switchMapSingleDelayError.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code switchMapSingleDelayError} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -12456,7 +12657,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns a Single that emits a single item, a list composed of all the items emitted by the
      * finite source ObservableSource.
      * <p>
-     * <img width="640" height="305" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/toList.2.png" alt="">
+     * <img width="640" height="365" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/toList.o.c.png" alt="">
      * <p>
      * Normally, an ObservableSource that returns multiple items will do so by invoking its {@link Observer}'s
      * {@link Observer#onNext onNext} method for each such item. You can change this behavior, instructing the
@@ -12709,6 +12910,30 @@ public abstract class Observable<T> implements ObservableSource<T> {
 
     /**
      * Converts the current Observable into a Flowable by applying the specified backpressure strategy.
+     * <p>
+     * Marble diagrams for the various backpressure strategies are as follows:
+     * <ul>
+     * <li>{@link BackpressureStrategy#BUFFER}
+     * <p>
+     * <img width="640" height="274" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/toFlowable.o.buffer.png" alt="">
+     * </li>
+     * <li>{@link BackpressureStrategy#DROP}
+     * <p>
+     * <img width="640" height="389" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/toFlowable.o.drop.png" alt="">
+     * </li>
+     * <li>{@link BackpressureStrategy#LATEST}
+     * <p>
+     * <img width="640" height="296" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/toFlowable.o.latest.png" alt="">
+     * </li>
+     * <li>{@link BackpressureStrategy#ERROR}
+     * <p>
+     * <img width="640" height="380" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/toFlowable.o.error.png" alt="">
+     * </li>
+     * <li>{@link BackpressureStrategy#MISSING}
+     * <p>
+     * <img width="640" height="411" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/toFlowable.o.missing.png" alt="">
+     * </li>
+     * </ul>
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator applies the chosen backpressure strategy of {@link BackpressureStrategy} enum.</dd>
@@ -12845,6 +13070,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Modifies the source ObservableSource so that subscribers will dispose it on a specified
      * {@link Scheduler}.
+     * <p>
+     * <img width="640" height="452" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/unsubscribeOn.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
@@ -13707,6 +13934,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that emits items that are the result of applying a specified function to pairs of
      * values, one each from the source ObservableSource and another specified ObservableSource.
      * <p>
+     * <img width="640" height="380" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/zip.png" alt="">
+     * <p>
      * The operator subscribes to its sources in order they are specified and completes eagerly if
      * one of the sources is shorter than the rest while disposing the other sources. Therefore, it
      * is possible those other sources will never be able to run to completion (and thus not calling
@@ -13718,8 +13947,6 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <br>To work around this termination property,
      * use {@link #doOnDispose(Action)} as well or use {@code using()} to do cleanup in case of completion
      * or a dispose() call.
-     *
-     * <img width="640" height="380" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/zip.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code zipWith} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -13750,6 +13977,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that emits items that are the result of applying a specified function to pairs of
      * values, one each from the source ObservableSource and another specified ObservableSource.
      * <p>
+     * <img width="640" height="380" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/zip.png" alt="">
+     * <p>
      * The operator subscribes to its sources in order they are specified and completes eagerly if
      * one of the sources is shorter than the rest while disposing the other sources. Therefore, it
      * is possible those other sources will never be able to run to completion (and thus not calling
@@ -13761,8 +13990,6 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <br>To work around this termination property,
      * use {@link #doOnDispose(Action)} as well or use {@code using()} to do cleanup in case of completion
      * or a dispose() call.
-     *
-     * <img width="640" height="380" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/zip.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code zipWith} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -13795,6 +14022,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that emits items that are the result of applying a specified function to pairs of
      * values, one each from the source ObservableSource and another specified ObservableSource.
      * <p>
+     * <img width="640" height="380" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/zip.png" alt="">
+     * <p>
      * The operator subscribes to its sources in order they are specified and completes eagerly if
      * one of the sources is shorter than the rest while disposing the other sources. Therefore, it
      * is possible those other sources will never be able to run to completion (and thus not calling
@@ -13806,8 +14035,6 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <br>To work around this termination property,
      * use {@link #doOnDispose(Action)} as well or use {@code using()} to do cleanup in case of completion
      * or a dispose() call.
-     *
-     * <img width="640" height="380" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/zip.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code zipWith} does not operate by default on a particular {@link Scheduler}.</dd>

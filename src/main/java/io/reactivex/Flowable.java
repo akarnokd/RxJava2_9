@@ -2892,6 +2892,19 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  backpressure; if violated, the operator <em>may</em> signal {@code MissingBackpressureException}.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code Publisher}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Flowable} terminates with that {@code Throwable} and all other source {@code Publisher}s are cancelled.
+     *  If more than one {@code Publisher} signals an error, the resulting {@code Flowable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Flowable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Iterable, int, int)} to merge sources and terminate only when all source {@code Publisher}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -2906,6 +2919,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      * @throws IllegalArgumentException
      *             if {@code maxConcurrency} is less than or equal to 0
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(Iterable, int, int)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -2929,6 +2943,19 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  backpressure; if violated, the operator <em>may</em> signal {@code MissingBackpressureException}.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code mergeArray} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code Publisher}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Flowable} terminates with that {@code Throwable} and all other source {@code Publisher}s are cancelled.
+     *  If more than one {@code Publisher} signals an error, the resulting {@code Flowable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Flowable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeArrayDelayError(int, int, Publisher[])} to merge sources and terminate only when all source {@code Publisher}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -2943,6 +2970,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      * @throws IllegalArgumentException
      *             if {@code maxConcurrency} is less than or equal to 0
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeArrayDelayError(int, int, Publisher...)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -2965,6 +2993,19 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  backpressure; if violated, the operator <em>may</em> signal {@code MissingBackpressureException}.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code Publisher}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Flowable} terminates with that {@code Throwable} and all other source {@code Publisher}s are cancelled.
+     *  If more than one {@code Publisher} signals an error, the resulting {@code Flowable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Flowable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Iterable)} to merge sources and terminate only when all source {@code Publisher}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -2973,6 +3014,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      * @return a Flowable that emits items that are the result of flattening the items emitted by the
      *         Publishers in the Iterable
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(Iterable)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -2996,6 +3038,19 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  backpressure; if violated, the operator <em>may</em> signal {@code MissingBackpressureException}.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code Publisher}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Flowable} terminates with that {@code Throwable} and all other source {@code Publisher}s are cancelled.
+     *  If more than one {@code Publisher} signals an error, the resulting {@code Flowable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Flowable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Iterable, int)} to merge sources and terminate only when all source {@code Publisher}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -3008,6 +3063,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      * @throws IllegalArgumentException
      *             if {@code maxConcurrency} is less than or equal to 0
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(Iterable, int)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -3032,6 +3088,19 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  backpressure; if violated, the operator <em>may</em> signal {@code MissingBackpressureException}.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code Publisher}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Flowable} terminates with that {@code Throwable} and all other source {@code Publisher}s are cancelled.
+     *  If more than one {@code Publisher} signals an error, the resulting {@code Flowable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Flowable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Publisher)} to merge sources and terminate only when all source {@code Publisher}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -3040,6 +3109,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      * @return a Flowable that emits items that are the result of flattening the Publishers emitted by the
      *         {@code source} Publisher
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(Publisher)
      */
     @CheckReturnValue
     @BackpressureSupport(BackpressureKind.FULL)
@@ -3063,6 +3133,19 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  backpressure; if violated, the operator <em>may</em> signal {@code MissingBackpressureException}.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code Publisher}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Flowable} terminates with that {@code Throwable} and all other source {@code Publisher}s are cancelled.
+     *  If more than one {@code Publisher} signals an error, the resulting {@code Flowable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Flowable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Publisher, int)} to merge sources and terminate only when all source {@code Publisher}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -3075,6 +3158,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      * @throws IllegalArgumentException
      *             if {@code maxConcurrency} is less than or equal to 0
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(Publisher, int)
      * @since 1.1.0
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -3098,6 +3182,19 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  backpressure; if violated, the operator <em>may</em> signal {@code MissingBackpressureException}.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code mergeArray} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code Publisher}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Flowable} terminates with that {@code Throwable} and all other source {@code Publisher}s are cancelled.
+     *  If more than one {@code Publisher} signals an error, the resulting {@code Flowable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Flowable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeArrayDelayError(Publisher...)} to merge sources and terminate only when all source {@code Publisher}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -3105,6 +3202,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *            the array of Publishers
      * @return a Flowable that emits all of the items emitted by the Publishers in the Array
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeArrayDelayError(Publisher...)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -3127,6 +3225,19 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  backpressure; if violated, the operator <em>may</em> signal {@code MissingBackpressureException}.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code Publisher}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Flowable} terminates with that {@code Throwable} and all other source {@code Publisher}s are cancelled.
+     *  If more than one {@code Publisher} signals an error, the resulting {@code Flowable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Flowable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Publisher, Publisher)} to merge sources and terminate only when all source {@code Publisher}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -3136,6 +3247,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *            a Publisher to be merged
      * @return a Flowable that emits all of the items emitted by the source Publishers
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(Publisher, Publisher)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -3160,6 +3272,19 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  backpressure; if violated, the operator <em>may</em> signal {@code MissingBackpressureException}.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code Publisher}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Flowable} terminates with that {@code Throwable} and all other source {@code Publisher}s are cancelled.
+     *  If more than one {@code Publisher} signals an error, the resulting {@code Flowable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Flowable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Publisher, Publisher, Publisher)} to merge sources and terminate only when all source {@code Publisher}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -3171,6 +3296,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *            a Publisher to be merged
      * @return a Flowable that emits all of the items emitted by the source Publishers
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(Publisher, Publisher, Publisher)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -3196,6 +3322,19 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  backpressure; if violated, the operator <em>may</em> signal {@code MissingBackpressureException}.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code merge} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If any of the source {@code Publisher}s signal a {@code Throwable} via {@code onError}, the resulting
+     *  {@code Flowable} terminates with that {@code Throwable} and all other source {@code Publisher}s are cancelled.
+     *  If more than one {@code Publisher} signals an error, the resulting {@code Flowable} may terminate with the
+     *  first one's error or, depending on the concurrency of the sources, may terminate with a
+     *  {@code CompositeException} containing two or more of the various error signals.
+     *  {@code Throwable}s that didn't make into the composite will be sent (individually) to the global error handler via
+     *  {@link RxJavaPlugins#onError(Throwable)} method as {@code UndeliverableException} errors. Similarly, {@code Throwable}s
+     *  signaled by source(s) after the returned {@code Flowable} has been cancelled or terminated with a
+     *  (composite) error will be sent to the same global error handler.
+     *  Use {@link #mergeDelayError(Publisher, Publisher, Publisher, Publisher)} to merge sources and terminate only when all source {@code Publisher}s
+     *  have completed or failed with an error.
+     *  </dd>
      * </dl>
      *
      * @param <T> the common element base type
@@ -3209,6 +3348,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *            a Publisher to be merged
      * @return a Flowable that emits all of the items emitted by the source Publishers
      * @see <a href="http://reactivex.io/documentation/operators/merge.html">ReactiveX operators documentation: Merge</a>
+     * @see #mergeDelayError(Publisher, Publisher, Publisher, Publisher)
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     @CheckReturnValue
@@ -10524,7 +10664,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code onTerminateDetach} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
-     * @return a Flowable which out references to the upstream producer and downstream Subscriber if
+     * @return a Flowable which nulls out references to the upstream producer and downstream Subscriber if
      * the sequence is terminated or downstream cancels
      * @since 2.0
      */
@@ -11770,19 +11910,19 @@ public abstract class Flowable<T> implements Publisher<T> {
      * resubscribe to the source Publisher.
      * <p>
      * <img width="640" height="430" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/retryWhen.f.png" alt="">
-     *
+     * <p>
      * Example:
      *
      * This retries 3 times, each time incrementing the number of seconds it waits.
      *
      * <pre><code>
-     *  Publisher.create((Subscriber&lt;? super String&gt; s) -&gt; {
+     *  Flowable.create((FlowableEmitter&lt;? super String&gt; s) -&gt; {
      *      System.out.println("subscribing");
      *      s.onError(new RuntimeException("always fails"));
-     *  }).retryWhen(attempts -&gt; {
+     *  }, BackpressureStrategy.BUFFER).retryWhen(attempts -&gt; {
      *      return attempts.zipWith(Flowable.range(1, 3), (n, i) -&gt; i).flatMap(i -&gt; {
      *          System.out.println("delay retry by " + i + " second(s)");
-     *          return Publisher.timer(i, TimeUnit.SECONDS);
+     *          return Flowable.timer(i, TimeUnit.SECONDS);
      *      });
      *  }).blockingForEach(System.out::println);
      * </code></pre>
@@ -11798,9 +11938,35 @@ public abstract class Flowable<T> implements Publisher<T> {
      * delay retry by 3 second(s)
      * subscribing
      * } </pre>
+     * <p>
+     * Note that the inner {@code Publisher} returned by the handler function should signal
+     * either {@code onNext}, {@code onError} or {@code onComplete} in response to the received
+     * {@code Throwable} to indicate the operator should retry or terminate. If the upstream to
+     * the operator is asynchronous, signalling onNext followed by onComplete immediately may
+     * result in the sequence to be completed immediately. Similarly, if this inner
+     * {@code Publisher} signals {@code onError} or {@code onComplete} while the upstream is
+     * active, the sequence is terminated with the same signal immediately.
+     * <p>
+     * The following example demonstrates how to retry an asynchronous source with a delay:
+     * <pre><code>
+     * Flowable.timer(1, TimeUnit.SECONDS)
+     *     .doOnSubscribe(s -&gt; System.out.println("subscribing"))
+     *     .map(v -&gt; { throw new RuntimeException(); })
+     *     .retryWhen(errors -&gt; {
+     *         AtomicInteger counter = new AtomicInteger();
+     *         return errors
+     *                   .takeWhile(e -&gt; counter.getAndIncrement() != 3)
+     *                   .flatMap(e -&gt; {
+     *                       System.out.println("delay retry by " + counter.get() + " second(s)");
+     *                       return Flowable.timer(counter.get(), TimeUnit.SECONDS);
+     *                   });
+     *     })
+     *     .blockingSubscribe(System.out::println, System.out::println);
+     * </code></pre>
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
-     *  <dd>The operator honors downstream backpressure and expects the source {@code Publisher} to honor backpressure as well.
+     *  <dd>The operator honors downstream backpressure and expects both the source
+     *  and inner {@code Publisher}s to honor backpressure as well.
      *  If this expectation is violated, the operator <em>may</em> throw an {@code IllegalStateException}.</dd>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code retryWhen} does not operate by default on a particular {@link Scheduler}.</dd>

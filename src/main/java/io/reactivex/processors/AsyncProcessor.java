@@ -15,16 +15,20 @@ package io.reactivex.processors;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.reactivestreams.*;
+
 import io.reactivex.annotations.*;
+import io.reactivex.internal.functions.ObjectHelper;
 import io.reactivex.internal.subscriptions.DeferredScalarSubscription;
 import io.reactivex.plugins.RxJavaPlugins;
-import org.reactivestreams.*;
 
 /**
  * Processor that emits the very last value followed by a completion event or the received error
  * to {@link Subscriber}s.
- *
- * <p>The implementation of onXXX methods are technically thread-safe but non-serialized calls
+ * <p>
+ * <img width="640" height="239" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/AsyncProcessor.png" alt="">
+ * <p>
+ * The implementation of onXXX methods are technically thread-safe but non-serialized calls
  * to them may lead to undefined state in the currently subscribed Subscribers.
  *
  * @param <T> the value type
@@ -77,32 +81,17 @@ public final class AsyncProcessor<T> extends FlowableProcessor<T> {
 
     @Override
     public void onNext(T t) {
+        ObjectHelper.requireNonNull(t, "onNext called with null. Null values are generally not allowed in 2.x operators and sources.");
         if (subscribers.get() == TERMINATED) {
-            return;
-        }
-        if (t == null) {
-            nullOnNext();
             return;
         }
         value = t;
     }
 
     @SuppressWarnings("unchecked")
-    void nullOnNext() {
-        value = null;
-        Throwable ex = new NullPointerException("onNext called with null. Null values are generally not allowed in 2.x operators and sources.");
-        error = ex;
-        for (AsyncSubscription<T> as : subscribers.getAndSet(TERMINATED)) {
-            as.onError(ex);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
     @Override
     public void onError(Throwable t) {
-        if (t == null) {
-            t = new NullPointerException("onError called with null. Null values are generally not allowed in 2.x operators and sources.");
-        }
+        ObjectHelper.requireNonNull(t, "onError called with null. Null values are generally not allowed in 2.x operators and sources.");
         if (subscribers.get() == TERMINATED) {
             RxJavaPlugins.onError(t);
             return;

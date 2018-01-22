@@ -18,6 +18,7 @@ import org.reactivestreams.*;
 
 import io.reactivex.annotations.*;
 import io.reactivex.exceptions.MissingBackpressureException;
+import io.reactivex.internal.functions.ObjectHelper;
 import io.reactivex.internal.subscriptions.SubscriptionHelper;
 import io.reactivex.internal.util.BackpressureHelper;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -26,7 +27,7 @@ import io.reactivex.plugins.RxJavaPlugins;
  * Processor that multicasts all subsequently observed items to its current {@link Subscriber}s.
  *
  * <p>
- * <img width="640" height="405" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/S.PublishSubject.png" alt="">
+ * <img width="640" height="278" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/PublishProcessor.png" alt="">
  *
  * <p>The processor does not coordinate backpressure for its subscribers and implements a weaker onSubscribe which
  * calls requests Long.MAX_VALUE from the incoming Subscriptions. This makes it possible to subscribe the PublishProcessor
@@ -186,11 +187,8 @@ public final class PublishProcessor<T> extends FlowableProcessor<T> {
 
     @Override
     public void onNext(T t) {
+        ObjectHelper.requireNonNull(t, "onNext called with null. Null values are generally not allowed in 2.x operators and sources.");
         if (subscribers.get() == TERMINATED) {
-            return;
-        }
-        if (t == null) {
-            onError(new NullPointerException("onNext called with null. Null values are generally not allowed in 2.x operators and sources."));
             return;
         }
         for (PublishSubscription<T> s : subscribers.get()) {
@@ -201,12 +199,10 @@ public final class PublishProcessor<T> extends FlowableProcessor<T> {
     @SuppressWarnings("unchecked")
     @Override
     public void onError(Throwable t) {
+        ObjectHelper.requireNonNull(t, "onError called with null. Null values are generally not allowed in 2.x operators and sources.");
         if (subscribers.get() == TERMINATED) {
             RxJavaPlugins.onError(t);
             return;
-        }
-        if (t == null) {
-            t = new NullPointerException("onError called with null. Null values are generally not allowed in 2.x operators and sources.");
         }
         error = t;
 
