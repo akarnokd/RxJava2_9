@@ -153,6 +153,7 @@ javadoc {
 test {
     maxHeapSize = "1g"
     testLogging  {
+        exceptionFormat="full"
         events "skipped" //"started", "failed" // , "passed"
     //    showStandardStreams = true
     }
