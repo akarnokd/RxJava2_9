@@ -2234,17 +2234,17 @@ public abstract class Observable<T> implements ObservableSource<T> {
     }
 
     /**
-     * Returns an Observable that emits a single item and then completes.
+     * Returns an Observable that signals the given (constant reference) item and then completes.
      * <p>
      * <img width="640" height="290" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/just.item.png" alt="">
      * <p>
-     * To convert any object into an ObservableSource that emits that object, pass that object into the {@code just}
-     * method.
+     * Note that the item is taken and re-emitted as is and not computed by any means by {@code just}. Use {@link #fromCallable(Callable)}
+     * to generate a single item on demand (when {@code Observer}s subscribe to it).
      * <p>
-     * This is similar to the {@link #fromArray(java.lang.Object[])} method, except that {@code from} will convert
-     * an {@link Iterable} object into an ObservableSource that emits each of the items in the Iterable, one at a
-     * time, while the {@code just} method converts an Iterable into an ObservableSource that emits the entire
-     * Iterable as a single item.
+     * See the multi-parameter overloads of {@code just} to emit more than one (constant reference) items one after the other.
+     * Use {@link #fromArray(Object...)} to emit an arbitrary number of items that are known upfront.
+     * <p>
+     * To emit the items of an {@link Iterable} sequence (such as a {@link java.util.List}), use {@link #fromIterable(Iterable)}.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code just} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -2256,6 +2256,10 @@ public abstract class Observable<T> implements ObservableSource<T> {
      *            the type of that item
      * @return an Observable that emits {@code value} as a single item and then completes
      * @see <a href="http://reactivex.io/documentation/operators/just.html">ReactiveX operators documentation: Just</a>
+     * @see #just(Object, Object)
+     * @see #fromCallable(Callable)
+     * @see #fromArray(Object...)
+     * @see #fromIterable(Iterable)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -5078,7 +5082,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Converts this {@code Observable} into an {@link Iterable}.
      * <p>
-     * <img width="640" height="315" src="https://github.com/ReactiveX/RxJava/wiki/images/rx-operators/B.toIterable.png" alt="">
+     * <img width="640" height="315" src="https://github.com/ReactiveX/RxJava/wiki/images/rx-operators/blockingIterable.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code blockingIterable} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -5150,6 +5154,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
     /**
      * Returns an {@link Iterable} that returns the latest item emitted by this {@code Observable},
      * waiting if necessary for one to become available.
+     * <p>
+     * <img width="640" height="350" src="https://github.com/ReactiveX/RxJava/wiki/images/rx-operators/blockingLatest.o.png" alt="">
      * <p>
      * If this {@code Observable} produces items faster than {@code Iterator.next} takes them,
      * {@code onNext} events might be skipped, but {@code onError} or {@code onComplete} events are not.
@@ -7005,9 +7011,25 @@ public abstract class Observable<T> implements ObservableSource<T> {
     }
 
     /**
-     * Returns an Observable that emits all items emitted by the source ObservableSource that are distinct.
+     * Returns an Observable that emits all items emitted by the source ObservableSource that are distinct
+     * based on {@link Object#equals(Object)} comparison.
      * <p>
      * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/distinct.png" alt="">
+     * <p>
+     * It is recommended the elements' class {@code T} in the flow overrides the default {@code Object.equals()}
+     * and {@link Object#hashCode()} to provide meaningful comparison between items as the default Java
+     * implementation only considers reference equivalence.
+     * <p>
+     * By default, {@code distinct()} uses an internal {@link java.util.HashSet} per Observer to remember
+     * previously seen items and uses {@link java.util.Set#add(Object)} returning {@code false} as the
+     * indicator for duplicates.
+     * <p>
+     * Note that this internal {@code HashSet} may grow unbounded as items won't be removed from it by
+     * the operator. Therefore, using very long or infinite upstream (with very distinct elements) may lead
+     * to {@code OutOfMemoryError}.
+     * <p>
+     * Customizing the retention policy can happen only by providing a custom {@link java.util.Collection} implementation
+     * to the {@link #distinct(Function, Callable)} overload.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code distinct} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7016,6 +7038,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * @return an Observable that emits only those items emitted by the source ObservableSource that are distinct from
      *         each other
      * @see <a href="http://reactivex.io/documentation/operators/distinct.html">ReactiveX operators documentation: Distinct</a>
+     * @see #distinct(Function)
+     * @see #distinct(Function, Callable)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -7025,9 +7049,25 @@ public abstract class Observable<T> implements ObservableSource<T> {
 
     /**
      * Returns an Observable that emits all items emitted by the source ObservableSource that are distinct according
-     * to a key selector function.
+     * to a key selector function and based on {@link Object#equals(Object)} comparison of the objects
+     * returned by the key selector function.
      * <p>
      * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/distinct.key.png" alt="">
+     * <p>
+     * It is recommended the keys' class {@code K} overrides the default {@code Object.equals()}
+     * and {@link Object#hashCode()} to provide meaningful comparison between the key objects as the default
+     * Java implementation only considers reference equivalence.
+     * <p>
+     * By default, {@code distinct()} uses an internal {@link java.util.HashSet} per Observer to remember
+     * previously seen keys and uses {@link java.util.Set#add(Object)} returning {@code false} as the
+     * indicator for duplicates.
+     * <p>
+     * Note that this internal {@code HashSet} may grow unbounded as keys won't be removed from it by
+     * the operator. Therefore, using very long or infinite upstream (with very distinct keys) may lead
+     * to {@code OutOfMemoryError}.
+     * <p>
+     * Customizing the retention policy can happen only by providing a custom {@link java.util.Collection} implementation
+     * to the {@link #distinct(Function, Callable)} overload.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code distinct} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7039,6 +7079,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      *            is distinct from another one or not
      * @return an Observable that emits those items emitted by the source ObservableSource that have distinct keys
      * @see <a href="http://reactivex.io/documentation/operators/distinct.html">ReactiveX operators documentation: Distinct</a>
+     * @see #distinct(Function, Callable)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -7048,9 +7089,14 @@ public abstract class Observable<T> implements ObservableSource<T> {
 
     /**
      * Returns an Observable that emits all items emitted by the source ObservableSource that are distinct according
-     * to a key selector function.
+     * to a key selector function and based on {@link Object#equals(Object)} comparison of the objects
+     * returned by the key selector function.
      * <p>
      * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/distinct.key.png" alt="">
+     * <p>
+     * It is recommended the keys' class {@code K} overrides the default {@code Object.equals()}
+     * and {@link Object#hashCode()}  to provide meaningful comparison between the key objects as
+     * the default Java implementation only considers reference equivalence.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code distinct} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7076,9 +7122,18 @@ public abstract class Observable<T> implements ObservableSource<T> {
 
     /**
      * Returns an Observable that emits all items emitted by the source ObservableSource that are distinct from their
-     * immediate predecessors.
+     * immediate predecessors based on {@link Object#equals(Object)} comparison.
      * <p>
      * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/distinctUntilChanged.png" alt="">
+     * <p>
+     * It is recommended the elements' class {@code T} in the flow overrides the default {@code Object.equals()} to provide
+     * meaningful comparison between items as the default Java implementation only considers reference equivalence.
+     * Alternatively, use the {@link #distinctUntilChanged(BiPredicate)} overload and provide a comparison function
+     * in case the class {@code T} can't be overridden with custom {@code equals()} or the comparison itself
+     * should happen on different terms or properties of the class {@code T}.
+     * <p>
+     * Note that the operator always retains the latest item from upstream regardless of the comparison result
+     * and uses it in the next comparison with the next upstream item.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code distinctUntilChanged} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7087,6 +7142,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * @return an Observable that emits those items from the source ObservableSource that are distinct from their
      *         immediate predecessors
      * @see <a href="http://reactivex.io/documentation/operators/distinct.html">ReactiveX operators documentation: Distinct</a>
+     * @see #distinctUntilChanged(BiPredicate)
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
@@ -7096,9 +7152,20 @@ public abstract class Observable<T> implements ObservableSource<T> {
 
     /**
      * Returns an Observable that emits all items emitted by the source ObservableSource that are distinct from their
-     * immediate predecessors, according to a key selector function.
+     * immediate predecessors, according to a key selector function and based on {@link Object#equals(Object)} comparison
+     * of those objects returned by the key selector function.
      * <p>
      * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/distinctUntilChanged.key.png" alt="">
+     * <p>
+     * It is recommended the keys' class {@code K} overrides the default {@code Object.equals()} to provide
+     * meaningful comparison between the key objects as the default Java implementation only considers reference equivalence.
+     * Alternatively, use the {@link #distinctUntilChanged(BiPredicate)} overload and provide a comparison function
+     * in case the class {@code K} can't be overridden with custom {@code equals()} or the comparison itself
+     * should happen on different terms or properties of the item class {@code T} (for which the keys can be
+     * derived via a similar selector).
+     * <p>
+     * Note that the operator always retains the latest key from upstream regardless of the comparison result
+     * and uses it in the next comparison with the next key derived from the next upstream item.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code distinctUntilChanged} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7124,6 +7191,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * immediate predecessors when compared with each other via the provided comparator function.
      * <p>
      * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/distinctUntilChanged.png" alt="">
+     * <p>
+     * Note that the operator always retains the latest item from upstream regardless of the comparison result
+     * and uses it in the next comparison with the next upstream item.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code distinctUntilChanged} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -9496,6 +9566,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * emitted by a {@link ConnectableObservable} that shares a single subscription to the source ObservableSource,
      * replaying {@code bufferSize} notifications.
      * <p>
+     * Note that due to concurrency requirements, {@code replay(bufferSize)} may hold strong references to more than
+     * {@code bufferSize} source emissions.
+     * <p>
      * <img width="640" height="391" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.fn.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
@@ -9526,6 +9599,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that emits items that are the results of invoking a specified selector on items
      * emitted by a {@link ConnectableObservable} that shares a single subscription to the source ObservableSource,
      * replaying no more than {@code bufferSize} items that were emitted within a specified time window.
+     * <p>
+     * Note that due to concurrency requirements, {@code replay(bufferSize)} may hold strong references to more than
+     * {@code bufferSize} source emissions.
      * <p>
      * <img width="640" height="350" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.fnt.png" alt="">
      * <dl>
@@ -9560,6 +9636,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that emits items that are the results of invoking a specified selector on items
      * emitted by a {@link ConnectableObservable} that shares a single subscription to the source ObservableSource,
      * replaying no more than {@code bufferSize} items that were emitted within a specified time window.
+     * <p>
+     * Note that due to concurrency requirements, {@code replay(bufferSize)} may hold strong references to more than
+     * {@code bufferSize} source emissions.
      * <p>
      * <img width="640" height="328" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.fnts.png" alt="">
      * <dl>
@@ -9603,6 +9682,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns an Observable that emits items that are the results of invoking a specified selector on items
      * emitted by a {@link ConnectableObservable} that shares a single subscription to the source ObservableSource,
      * replaying a maximum of {@code bufferSize} items.
+     * <p>
+     * Note that due to concurrency requirements, {@code replay(bufferSize)} may hold strong references to more than
+     * {@code bufferSize} source emissions.
      * <p>
      * <img width="640" height="362" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.fns.png" alt="">
      * <dl>
@@ -9738,6 +9820,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * an ordinary ObservableSource, except that it does not begin emitting items when it is subscribed to, but only
      * when its {@code connect} method is called.
      * <p>
+     * Note that due to concurrency requirements, {@code replay(bufferSize)} may hold strong references to more than
+     * {@code bufferSize} source emissions.
+     * <p>
      * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.n.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
@@ -9762,6 +9847,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * replays at most {@code bufferSize} items that were emitted during a specified time window. A Connectable
      * ObservableSource resembles an ordinary ObservableSource, except that it does not begin emitting items when it is
      * subscribed to, but only when its {@code connect} method is called.
+     * <p>
+     * Note that due to concurrency requirements, {@code replay(bufferSize)} may hold strong references to more than
+     * {@code bufferSize} source emissions.
      * <p>
      * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.nt.png" alt="">
      * <dl>
@@ -9791,6 +9879,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * that replays a maximum of {@code bufferSize} items that are emitted within a specified time window. A
      * Connectable ObservableSource resembles an ordinary ObservableSource, except that it does not begin emitting items
      * when it is subscribed to, but only when its {@code connect} method is called.
+     * <p>
+     * Note that due to concurrency requirements, {@code replay(bufferSize)} may hold strong references to more than
+     * {@code bufferSize} source emissions.
      * <p>
      * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.nts.png" alt="">
      * <dl>
@@ -9827,6 +9918,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * replays at most {@code bufferSize} items emitted by that ObservableSource. A Connectable ObservableSource resembles
      * an ordinary ObservableSource, except that it does not begin emitting items when it is subscribed to, but only
      * when its {@code connect} method is called.
+     * <p>
+     * Note that due to concurrency requirements, {@code replay(bufferSize)} may hold strong references to more than
+     * {@code bufferSize} source emissions.
      * <p>
      * <img width="640" height="445" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/replay.o.ns.png" alt="">
      * <dl>
@@ -10493,11 +10587,11 @@ public abstract class Observable<T> implements ObservableSource<T> {
     }
 
     /**
-     * Returns a new {@link ObservableSource} that multicasts (shares) the original {@link ObservableSource}. As long as
+     * Returns a new {@link ObservableSource} that multicasts (and shares a single subscription to) the original {@link ObservableSource}. As long as
      * there is at least one {@link Observer} this {@link ObservableSource} will be subscribed and emitting data.
      * When all subscribers have disposed it will dispose the source {@link ObservableSource}.
      * <p>
-     * This is an alias for {@link #publish()}.{@link ConnectableObservable#refCount()}.
+     * This is an alias for {@link #publish()}.{@link ConnectableObservable#refCount() refCount()}.
      * <p>
      * <img width="640" height="510" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/publishRefCount.o.png" alt="">
      * <dl>
