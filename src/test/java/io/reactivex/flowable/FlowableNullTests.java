@@ -999,7 +999,7 @@ public class FlowableNullTests {
 
     @Test(expected = NullPointerException.class)
     public void concatWithNull() {
-        just1.concatWith(null);
+        just1.concatWith((Publisher<Integer>)null);
     }
 
     @Test(expected = NullPointerException.class)
@@ -1620,7 +1620,7 @@ public class FlowableNullTests {
 
     @Test(expected = NullPointerException.class)
     public void mergeWithNull() {
-        just1.mergeWith(null);
+        just1.mergeWith((Publisher<Integer>)null);
     }
 
     @Test(expected = NullPointerException.class)

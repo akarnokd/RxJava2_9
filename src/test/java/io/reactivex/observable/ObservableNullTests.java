@@ -1088,7 +1088,7 @@ public class ObservableNullTests {
 
     @Test(expected = NullPointerException.class)
     public void concatWithNull() {
-        just1.concatWith(null);
+        just1.concatWith((ObservableSource<Integer>)null);
     }
 
     @Test(expected = NullPointerException.class)
@@ -1685,7 +1685,7 @@ public class ObservableNullTests {
 
     @Test(expected = NullPointerException.class)
     public void mergeWithNull() {
-        just1.mergeWith(null);
+        just1.mergeWith((ObservableSource<Integer>)null);
     }
 
     @Test(expected = NullPointerException.class)
