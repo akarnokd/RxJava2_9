@@ -28,6 +28,7 @@ import io.reactivex.exceptions.TestException;
 import io.reactivex.functions.*;
 import io.reactivex.internal.functions.Functions;
 import io.reactivex.observers.*;
+import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subjects.*;
 
@@ -201,14 +202,14 @@ public class ObservableWindowWithStartEndObservableTest {
         PublishSubject<Integer> open = PublishSubject.create();
         final PublishSubject<Integer> close = PublishSubject.create();
 
-        TestObserver<Observable<Integer>> ts = new TestObserver<Observable<Integer>>();
+        TestObserver<Observable<Integer>> to = new TestObserver<Observable<Integer>>();
 
         source.window(open, new Function<Integer, Observable<Integer>>() {
             @Override
             public Observable<Integer> apply(Integer t) {
                 return close;
             }
-        }).subscribe(ts);
+        }).subscribe(to);
 
         open.onNext(1);
         source.onNext(1);
@@ -222,9 +223,9 @@ public class ObservableWindowWithStartEndObservableTest {
 
         source.onComplete();
 
-        ts.assertComplete();
-        ts.assertNoErrors();
-        ts.assertValueCount(1);
+        to.assertComplete();
+        to.assertNoErrors();
+        to.assertValueCount(1);
 
         // 2.0.2 - not anymore
 //        assertTrue("Not cancelled!", ts.isCancelled());
@@ -239,21 +240,21 @@ public class ObservableWindowWithStartEndObservableTest {
         PublishSubject<Integer> open = PublishSubject.create();
         final PublishSubject<Integer> close = PublishSubject.create();
 
-        TestObserver<Observable<Integer>> ts = new TestObserver<Observable<Integer>>();
+        TestObserver<Observable<Integer>> to = new TestObserver<Observable<Integer>>();
 
         source.window(open, new Function<Integer, Observable<Integer>>() {
             @Override
             public Observable<Integer> apply(Integer t) {
                 return close;
             }
-        }).subscribe(ts);
+        }).subscribe(to);
 
         open.onNext(1);
 
         assertTrue(open.hasObservers());
         assertTrue(close.hasObservers());
 
-        ts.dispose();
+        to.dispose();
 
         // FIXME subject has subscribers because of the open window
         assertTrue(open.hasObservers());
@@ -390,5 +391,36 @@ public class ObservableWindowWithStartEndObservableTest {
                 return o.window(Observable.just(1), Functions.justFunction(Observable.never()));
             }
         }, false, 1, 1, (Object[])null);
+    }
+
+    @Test
+    public void windowCloseIngoresCancel() {
+        List<Throwable> errors = TestHelper.trackPluginErrors();
+        try {
+            BehaviorSubject.createDefault(1)
+            .window(BehaviorSubject.createDefault(1), new Function<Integer, Observable<Integer>>() {
+                @Override
+                public Observable<Integer> apply(Integer f) throws Exception {
+                    return new Observable<Integer>() {
+                        @Override
+                        protected void subscribeActual(
+                                Observer<? super Integer> s) {
+                            s.onSubscribe(Disposables.empty());
+                            s.onNext(1);
+                            s.onNext(2);
+                            s.onError(new TestException());
+                        }
+                    };
+                }
+            })
+            .test()
+            .assertValueCount(1)
+            .assertNoErrors()
+            .assertNotComplete();
+
+            TestHelper.assertUndeliverable(errors, 0, TestException.class);
+        } finally {
+            RxJavaPlugins.reset();
+        }
     }
 }

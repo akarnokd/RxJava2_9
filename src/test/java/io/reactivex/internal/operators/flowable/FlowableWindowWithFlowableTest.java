@@ -19,15 +19,17 @@ import static org.mockito.Mockito.*;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.*;
 
 import org.junit.Test;
-import org.reactivestreams.Subscriber;
+import org.reactivestreams.*;
 
 import io.reactivex.*;
 import io.reactivex.exceptions.*;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.functions.Functions;
+import io.reactivex.internal.subscriptions.BooleanSubscription;
+import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.processors.*;
 import io.reactivex.subscribers.*;
 
@@ -198,7 +200,7 @@ public class FlowableWindowWithFlowableTest {
     }
 
     @Test
-    public void testWindowViaFlowableSourceThrows() {
+    public void testWindowViaFlowableThrows() {
         PublishProcessor<Integer> source = PublishProcessor.create();
         PublishProcessor<Integer> boundary = PublishProcessor.create();
 
@@ -343,8 +345,8 @@ public class FlowableWindowWithFlowableTest {
 
         boundary.onComplete();
 
-        // FIXME source still active because the open window
-        assertTrue(source.hasSubscribers());
+
+        assertFalse(source.hasSubscribers());
         assertFalse(boundary.hasSubscribers());
 
         ts.assertComplete();
@@ -371,10 +373,14 @@ public class FlowableWindowWithFlowableTest {
 
         ts.dispose();
 
-        // FIXME source has subscribers because the open window
+
         assertTrue(source.hasSubscribers());
-        // FIXME boundary has subscribers because the open window
-        assertTrue(boundary.hasSubscribers());
+
+        assertFalse(boundary.hasSubscribers());
+
+        ts.values().get(0).test().cancel();
+
+        assertFalse(source.hasSubscribers());
 
         ts.assertNotComplete();
         ts.assertNoErrors();
@@ -468,13 +474,13 @@ public class FlowableWindowWithFlowableTest {
 
     @Test
     public void boundaryOnError() {
-        TestSubscriber<Object> to = Flowable.error(new TestException())
+        TestSubscriber<Object> ts = Flowable.error(new TestException())
         .window(Flowable.never())
         .flatMap(Functions.<Flowable<Object>>identity(), true)
         .test()
         .assertFailure(CompositeException.class);
 
-        List<Throwable> errors = TestHelper.compositeList(to.errors().get(0));
+        List<Throwable> errors = TestHelper.compositeList(ts.errors().get(0));
 
         TestHelper.assertError(errors, 0, TestException.class);
     }
@@ -503,8 +509,18 @@ public class FlowableWindowWithFlowableTest {
 
         TestHelper.checkBadSourceFlowable(new Function<Flowable<Integer>, Object>() {
             @Override
-            public Object apply(Flowable<Integer> o) throws Exception {
-                return Flowable.just(1).window(Functions.justCallable(o)).flatMap(new Function<Flowable<Integer>, Flowable<Integer>>() {
+            public Object apply(final Flowable<Integer> o) throws Exception {
+                return Flowable.just(1).window(new Callable<Publisher<Integer>>() {
+                    int count;
+                    @Override
+                    public Publisher<Integer> call() throws Exception {
+                        if (++count > 1) {
+                            return Flowable.never();
+                        }
+                        return o;
+                    }
+                })
+                        .flatMap(new Function<Flowable<Integer>, Flowable<Integer>>() {
                     @Override
                     public Flowable<Integer> apply(Flowable<Integer> v) throws Exception {
                         return v;
@@ -518,7 +534,7 @@ public class FlowableWindowWithFlowableTest {
     public void reentrant() {
         final FlowableProcessor<Integer> ps = PublishProcessor.<Integer>create();
 
-        TestSubscriber<Integer> to = new TestSubscriber<Integer>() {
+        TestSubscriber<Integer> ts = new TestSubscriber<Integer>() {
             @Override
             public void onNext(Integer t) {
                 super.onNext(t);
@@ -536,11 +552,11 @@ public class FlowableWindowWithFlowableTest {
                 return v;
             }
         })
-        .subscribe(to);
+        .subscribe(ts);
 
         ps.onNext(1);
 
-        to
+        ts
         .awaitDone(1, TimeUnit.SECONDS)
         .assertResult(1, 2);
     }
@@ -549,7 +565,7 @@ public class FlowableWindowWithFlowableTest {
     public void reentrantCallable() {
         final FlowableProcessor<Integer> ps = PublishProcessor.<Integer>create();
 
-        TestSubscriber<Integer> to = new TestSubscriber<Integer>() {
+        TestSubscriber<Integer> ts = new TestSubscriber<Integer>() {
             @Override
             public void onNext(Integer t) {
                 super.onNext(t);
@@ -577,11 +593,11 @@ public class FlowableWindowWithFlowableTest {
                 return v;
             }
         })
-        .subscribe(to);
+        .subscribe(ts);
 
         ps.onNext(1);
 
-        to
+        ts
         .awaitDone(1, TimeUnit.SECONDS)
         .assertResult(1, 2);
     }
@@ -615,4 +631,726 @@ public class FlowableWindowWithFlowableTest {
             }
         }, false, 1, 1, 1);
     }
+
+    @Test
+    public void boundaryError() {
+        BehaviorProcessor.createDefault(1)
+        .window(Functions.justCallable(Flowable.error(new TestException())))
+        .test()
+        .assertValueCount(1)
+        .assertNotComplete()
+        .assertError(TestException.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void boundaryMissingBackpressure() {
+        BehaviorProcessor.createDefault(1)
+        .window(Functions.justCallable(Flowable.error(new TestException())))
+        .test(0)
+        .assertFailure(MissingBackpressureException.class);
+    }
+
+    @Test
+    public void boundaryCallableCrashOnCall2() {
+        BehaviorProcessor.createDefault(1)
+        .window(new Callable<Flowable<Integer>>() {
+            int calls;
+            @Override
+            public Flowable<Integer> call() throws Exception {
+                if (++calls == 2) {
+                    throw new TestException();
+                }
+                return Flowable.just(1);
+            }
+        })
+        .test()
+        .assertError(TestException.class)
+        .assertNotComplete();
+    }
+
+    @Test
+    public void boundarySecondMissingBackpressure() {
+        BehaviorProcessor.createDefault(1)
+        .window(Functions.justCallable(Flowable.just(1)))
+        .test(1)
+        .assertError(MissingBackpressureException.class)
+        .assertNotComplete();
+    }
+
+    @Test
+    public void oneWindow() {
+        PublishProcessor<Integer> pp = PublishProcessor.create();
+
+        TestSubscriber<Flowable<Integer>> ts = BehaviorProcessor.createDefault(1)
+        .window(Functions.justCallable(pp))
+        .take(1)
+        .test();
+
+        pp.onNext(1);
+
+        ts
+        .assertValueCount(1)
+        .assertNoErrors()
+        .assertComplete();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void boundaryDirectMissingBackpressure() {
+        BehaviorProcessor.create()
+        .window(Flowable.error(new TestException()))
+        .test(0)
+        .assertFailure(MissingBackpressureException.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void boundaryDirectMissingBackpressureNoNullPointerException() {
+        BehaviorProcessor.createDefault(1)
+        .window(Flowable.error(new TestException()))
+        .test(0)
+        .assertFailure(MissingBackpressureException.class);
+    }
+
+    @Test
+    public void boundaryDirectSecondMissingBackpressure() {
+        BehaviorProcessor.createDefault(1)
+        .window(Flowable.just(1))
+        .test(1)
+        .assertError(MissingBackpressureException.class)
+        .assertNotComplete();
+    }
+
+    @Test
+    public void boundaryDirectDoubleOnSubscribe() {
+        TestHelper.checkDoubleOnSubscribeFlowable(new Function<Flowable<Object>, Publisher<Flowable<Object>>>() {
+            @Override
+            public Publisher<Flowable<Object>> apply(Flowable<Object> f)
+                    throws Exception {
+                return f.window(Flowable.never()).takeLast(1);
+            }
+        });
+    }
+
+    @Test
+    public void upstreamDisposedWhenOutputsDisposed() {
+        PublishProcessor<Integer> source = PublishProcessor.create();
+        PublishProcessor<Integer> boundary = PublishProcessor.create();
+
+        TestSubscriber<Integer> ts = source.window(boundary)
+        .take(1)
+        .flatMap(new Function<Flowable<Integer>, Flowable<Integer>>() {
+            @Override
+            public Flowable<Integer> apply(
+                    Flowable<Integer> w) throws Exception {
+                return w.take(1);
+            }
+        })
+        .test();
+
+        source.onNext(1);
+
+        assertFalse("source not disposed", source.hasSubscribers());
+        assertFalse("boundary not disposed", boundary.hasSubscribers());
+
+        ts.assertResult(1);
+    }
+
+
+    @Test
+    public void mainAndBoundaryBothError() {
+        List<Throwable> errors = TestHelper.trackPluginErrors();
+        try {
+            final AtomicReference<Subscriber<? super Object>> ref = new AtomicReference<Subscriber<? super Object>>();
+
+            TestSubscriber<Flowable<Object>> ts = Flowable.error(new TestException("main"))
+            .window(new Flowable<Object>() {
+                @Override
+                protected void subscribeActual(Subscriber<? super Object> observer) {
+                    observer.onSubscribe(new BooleanSubscription());
+                    ref.set(observer);
+                }
+            })
+            .test();
+
+            ts
+            .assertValueCount(1)
+            .assertError(TestException.class)
+            .assertErrorMessage("main")
+            .assertNotComplete();
+
+            ref.get().onError(new TestException("inner"));
+
+            TestHelper.assertUndeliverable(errors, 0, TestException.class, "inner");
+        } finally {
+            RxJavaPlugins.reset();
+        }
+    }
+
+    @Test
+    public void mainCompleteBoundaryErrorRace() {
+        final TestException ex = new TestException();
+
+        for (int i = 0; i < TestHelper.RACE_LONG_LOOPS; i++) {
+            List<Throwable> errors = TestHelper.trackPluginErrors();
+            try {
+                final AtomicReference<Subscriber<? super Object>> refMain = new AtomicReference<Subscriber<? super Object>>();
+                final AtomicReference<Subscriber<? super Object>> ref = new AtomicReference<Subscriber<? super Object>>();
+
+                TestSubscriber<Flowable<Object>> ts = new Flowable<Object>() {
+                    @Override
+                    protected void subscribeActual(Subscriber<? super Object> observer) {
+                        observer.onSubscribe(new BooleanSubscription());
+                        refMain.set(observer);
+                    }
+                }
+                .window(new Flowable<Object>() {
+                    @Override
+                    protected void subscribeActual(Subscriber<? super Object> observer) {
+                        observer.onSubscribe(new BooleanSubscription());
+                        ref.set(observer);
+                    }
+                })
+                .test();
+
+                Runnable r1 = new Runnable() {
+                    @Override
+                    public void run() {
+                        refMain.get().onComplete();
+                    }
+                };
+                Runnable r2 = new Runnable() {
+                    @Override
+                    public void run() {
+                        ref.get().onError(ex);
+                    }
+                };
+
+                TestHelper.race(r1, r2);
+
+                ts
+                .assertValueCount(1)
+                .assertTerminated();
+
+                if (!errors.isEmpty()) {
+                    TestHelper.assertUndeliverable(errors, 0, TestException.class);
+                }
+            } finally {
+                RxJavaPlugins.reset();
+            }
+        }
+    }
+
+    @Test
+    public void mainNextBoundaryNextRace() {
+        for (int i = 0; i < TestHelper.RACE_LONG_LOOPS; i++) {
+            final AtomicReference<Subscriber<? super Object>> refMain = new AtomicReference<Subscriber<? super Object>>();
+            final AtomicReference<Subscriber<? super Object>> ref = new AtomicReference<Subscriber<? super Object>>();
+
+            TestSubscriber<Flowable<Object>> ts = new Flowable<Object>() {
+                @Override
+                protected void subscribeActual(Subscriber<? super Object> observer) {
+                    observer.onSubscribe(new BooleanSubscription());
+                    refMain.set(observer);
+                }
+            }
+            .window(new Flowable<Object>() {
+                @Override
+                protected void subscribeActual(Subscriber<? super Object> observer) {
+                    observer.onSubscribe(new BooleanSubscription());
+                    ref.set(observer);
+                }
+            })
+            .test();
+
+            Runnable r1 = new Runnable() {
+                @Override
+                public void run() {
+                    refMain.get().onNext(1);
+                }
+            };
+            Runnable r2 = new Runnable() {
+                @Override
+                public void run() {
+                    ref.get().onNext(1);
+                }
+            };
+
+            TestHelper.race(r1, r2);
+
+            ts
+            .assertValueCount(2)
+            .assertNotComplete()
+            .assertNoErrors();
+        }
+    }
+
+    @Test
+    public void takeOneAnotherBoundary() {
+        final AtomicReference<Subscriber<? super Object>> refMain = new AtomicReference<Subscriber<? super Object>>();
+        final AtomicReference<Subscriber<? super Object>> ref = new AtomicReference<Subscriber<? super Object>>();
+
+        TestSubscriber<Flowable<Object>> ts = new Flowable<Object>() {
+            @Override
+            protected void subscribeActual(Subscriber<? super Object> observer) {
+                observer.onSubscribe(new BooleanSubscription());
+                refMain.set(observer);
+            }
+        }
+        .window(new Flowable<Object>() {
+            @Override
+            protected void subscribeActual(Subscriber<? super Object> observer) {
+                observer.onSubscribe(new BooleanSubscription());
+                ref.set(observer);
+            }
+        })
+        .test();
+
+        ts.assertValueCount(1)
+        .assertNotTerminated()
+        .cancel();
+
+        ref.get().onNext(1);
+
+        ts.assertValueCount(1)
+        .assertNotTerminated();
+    }
+
+    @Test
+    public void disposeMainBoundaryCompleteRace() {
+        for (int i = 0; i < TestHelper.RACE_LONG_LOOPS; i++) {
+            final AtomicReference<Subscriber<? super Object>> refMain = new AtomicReference<Subscriber<? super Object>>();
+            final AtomicReference<Subscriber<? super Object>> ref = new AtomicReference<Subscriber<? super Object>>();
+
+            final TestSubscriber<Flowable<Object>> ts = new Flowable<Object>() {
+                 @Override
+                 protected void subscribeActual(Subscriber<? super Object> observer) {
+                     observer.onSubscribe(new BooleanSubscription());
+                     refMain.set(observer);
+                 }
+             }
+             .window(new Flowable<Object>() {
+                 @Override
+                 protected void subscribeActual(Subscriber<? super Object> observer) {
+                     final AtomicInteger counter = new AtomicInteger();
+                     observer.onSubscribe(new Subscription() {
+
+                         @Override
+                         public void cancel() {
+                             // about a microsecond
+                             for (int i = 0; i < 100; i++) {
+                                 counter.incrementAndGet();
+                             }
+                         }
+
+                         @Override
+                        public void request(long n) {
+                        }
+                     });
+                     ref.set(observer);
+                 }
+             })
+             .test();
+
+             Runnable r1 = new Runnable() {
+                 @Override
+                 public void run() {
+                     ts.cancel();
+                 }
+             };
+             Runnable r2 = new Runnable() {
+                 @Override
+                 public void run() {
+                     Subscriber<Object> o = ref.get();
+                     o.onNext(1);
+                     o.onComplete();
+                 }
+             };
+
+             TestHelper.race(r1, r2);
+        }
+    }
+
+    @Test
+    public void disposeMainBoundaryErrorRace() {
+        final TestException ex = new TestException();
+
+        for (int i = 0; i < TestHelper.RACE_LONG_LOOPS; i++) {
+           final AtomicReference<Subscriber<? super Object>> refMain = new AtomicReference<Subscriber<? super Object>>();
+           final AtomicReference<Subscriber<? super Object>> ref = new AtomicReference<Subscriber<? super Object>>();
+
+           final TestSubscriber<Flowable<Object>> ts = new Flowable<Object>() {
+               @Override
+               protected void subscribeActual(Subscriber<? super Object> observer) {
+                   observer.onSubscribe(new BooleanSubscription());
+                   refMain.set(observer);
+               }
+           }
+           .window(new Flowable<Object>() {
+               @Override
+               protected void subscribeActual(Subscriber<? super Object> observer) {
+                   final AtomicInteger counter = new AtomicInteger();
+                   observer.onSubscribe(new Subscription() {
+
+                       @Override
+                       public void cancel() {
+                           // about a microsecond
+                           for (int i = 0; i < 100; i++) {
+                               counter.incrementAndGet();
+                           }
+                       }
+
+                       @Override
+                      public void request(long n) {
+                      }
+                   });
+                   ref.set(observer);
+               }
+           })
+           .test();
+
+            Runnable r1 = new Runnable() {
+                @Override
+                public void run() {
+                    ts.cancel();
+                }
+            };
+            Runnable r2 = new Runnable() {
+                @Override
+                public void run() {
+                    Subscriber<Object> o = ref.get();
+                    o.onNext(1);
+                    o.onError(ex);
+                }
+            };
+
+            TestHelper.race(r1, r2);
+        }
+    }
+
+    @Test
+    public void boundarySupplierDoubleOnSubscribe() {
+        TestHelper.checkDoubleOnSubscribeFlowable(new Function<Flowable<Object>, Flowable<Flowable<Object>>>() {
+            @Override
+            public Flowable<Flowable<Object>> apply(Flowable<Object> f)
+                    throws Exception {
+                return f.window(Functions.justCallable(Flowable.never())).takeLast(1);
+            }
+        });
+    }
+
+    @Test
+    public void selectorUpstreamDisposedWhenOutputsDisposed() {
+        PublishProcessor<Integer> source = PublishProcessor.create();
+        PublishProcessor<Integer> boundary = PublishProcessor.create();
+
+        TestSubscriber<Integer> ts = source.window(Functions.justCallable(boundary))
+        .take(1)
+        .flatMap(new Function<Flowable<Integer>, Flowable<Integer>>() {
+            @Override
+            public Flowable<Integer> apply(
+                    Flowable<Integer> w) throws Exception {
+                return w.take(1);
+            }
+        })
+        .test();
+
+        source.onNext(1);
+
+        assertFalse("source not disposed", source.hasSubscribers());
+        assertFalse("boundary not disposed", boundary.hasSubscribers());
+
+        ts.assertResult(1);
+    }
+
+    @Test
+    public void supplierMainAndBoundaryBothError() {
+        List<Throwable> errors = TestHelper.trackPluginErrors();
+        try {
+            final AtomicReference<Subscriber<? super Object>> ref = new AtomicReference<Subscriber<? super Object>>();
+
+            TestSubscriber<Flowable<Object>> ts = Flowable.error(new TestException("main"))
+            .window(Functions.justCallable(new Flowable<Object>() {
+                @Override
+                protected void subscribeActual(Subscriber<? super Object> observer) {
+                    observer.onSubscribe(new BooleanSubscription());
+                    ref.set(observer);
+                }
+            }))
+            .test();
+
+            ts
+            .assertValueCount(1)
+            .assertError(TestException.class)
+            .assertErrorMessage("main")
+            .assertNotComplete();
+
+            ref.get().onError(new TestException("inner"));
+
+            TestHelper.assertUndeliverable(errors, 0, TestException.class, "inner");
+        } finally {
+            RxJavaPlugins.reset();
+        }
+    }
+
+    @Test
+    public void supplierMainCompleteBoundaryErrorRace() {
+        final TestException ex = new TestException();
+
+        for (int i = 0; i < TestHelper.RACE_LONG_LOOPS; i++) {
+            List<Throwable> errors = TestHelper.trackPluginErrors();
+            try {
+                final AtomicReference<Subscriber<? super Object>> refMain = new AtomicReference<Subscriber<? super Object>>();
+                final AtomicReference<Subscriber<? super Object>> ref = new AtomicReference<Subscriber<? super Object>>();
+
+                TestSubscriber<Flowable<Object>> ts = new Flowable<Object>() {
+                    @Override
+                    protected void subscribeActual(Subscriber<? super Object> observer) {
+                        observer.onSubscribe(new BooleanSubscription());
+                        refMain.set(observer);
+                    }
+                }
+                .window(Functions.justCallable(new Flowable<Object>() {
+                    @Override
+                    protected void subscribeActual(Subscriber<? super Object> observer) {
+                        observer.onSubscribe(new BooleanSubscription());
+                        ref.set(observer);
+                    }
+                }))
+                .test();
+
+                Runnable r1 = new Runnable() {
+                    @Override
+                    public void run() {
+                        refMain.get().onComplete();
+                    }
+                };
+                Runnable r2 = new Runnable() {
+                    @Override
+                    public void run() {
+                        ref.get().onError(ex);
+                    }
+                };
+
+                TestHelper.race(r1, r2);
+
+                ts
+                .assertValueCount(1)
+                .assertTerminated();
+
+                if (!errors.isEmpty()) {
+                    TestHelper.assertUndeliverable(errors, 0, TestException.class);
+                }
+            } finally {
+                RxJavaPlugins.reset();
+            }
+        }
+    }
+
+    @Test
+    public void supplierMainNextBoundaryNextRace() {
+        for (int i = 0; i < TestHelper.RACE_LONG_LOOPS; i++) {
+            final AtomicReference<Subscriber<? super Object>> refMain = new AtomicReference<Subscriber<? super Object>>();
+            final AtomicReference<Subscriber<? super Object>> ref = new AtomicReference<Subscriber<? super Object>>();
+
+            TestSubscriber<Flowable<Object>> ts = new Flowable<Object>() {
+                @Override
+                protected void subscribeActual(Subscriber<? super Object> observer) {
+                    observer.onSubscribe(new BooleanSubscription());
+                    refMain.set(observer);
+                }
+            }
+            .window(Functions.justCallable(new Flowable<Object>() {
+                @Override
+                protected void subscribeActual(Subscriber<? super Object> observer) {
+                    observer.onSubscribe(new BooleanSubscription());
+                    ref.set(observer);
+                }
+            }))
+            .test();
+
+            Runnable r1 = new Runnable() {
+                @Override
+                public void run() {
+                    refMain.get().onNext(1);
+                }
+            };
+            Runnable r2 = new Runnable() {
+                @Override
+                public void run() {
+                    ref.get().onNext(1);
+                }
+            };
+
+            TestHelper.race(r1, r2);
+
+            ts
+            .assertValueCount(2)
+            .assertNotComplete()
+            .assertNoErrors();
+        }
+    }
+
+    @Test
+    public void supplierTakeOneAnotherBoundary() {
+        final AtomicReference<Subscriber<? super Object>> refMain = new AtomicReference<Subscriber<? super Object>>();
+        final AtomicReference<Subscriber<? super Object>> ref = new AtomicReference<Subscriber<? super Object>>();
+
+        TestSubscriber<Flowable<Object>> ts = new Flowable<Object>() {
+            @Override
+            protected void subscribeActual(Subscriber<? super Object> observer) {
+                observer.onSubscribe(new BooleanSubscription());
+                refMain.set(observer);
+            }
+        }
+        .window(Functions.justCallable(new Flowable<Object>() {
+            @Override
+            protected void subscribeActual(Subscriber<? super Object> observer) {
+                observer.onSubscribe(new BooleanSubscription());
+                ref.set(observer);
+            }
+        }))
+        .test();
+
+        ts.assertValueCount(1)
+        .assertNotTerminated()
+        .cancel();
+
+        ref.get().onNext(1);
+
+        ts.assertValueCount(1)
+        .assertNotTerminated();
+    }
+
+    @Test
+    public void supplierDisposeMainBoundaryCompleteRace() {
+        for (int i = 0; i < TestHelper.RACE_LONG_LOOPS; i++) {
+            final AtomicReference<Subscriber<? super Object>> refMain = new AtomicReference<Subscriber<? super Object>>();
+            final AtomicReference<Subscriber<? super Object>> ref = new AtomicReference<Subscriber<? super Object>>();
+
+            final TestSubscriber<Flowable<Object>> ts = new Flowable<Object>() {
+                 @Override
+                 protected void subscribeActual(Subscriber<? super Object> observer) {
+                     observer.onSubscribe(new BooleanSubscription());
+                     refMain.set(observer);
+                 }
+             }
+             .window(Functions.justCallable(new Flowable<Object>() {
+                 @Override
+                 protected void subscribeActual(Subscriber<? super Object> observer) {
+                     final AtomicInteger counter = new AtomicInteger();
+                     observer.onSubscribe(new Subscription() {
+
+                         @Override
+                         public void cancel() {
+                             // about a microsecond
+                             for (int i = 0; i < 100; i++) {
+                                 counter.incrementAndGet();
+                             }
+                         }
+
+                         @Override
+                         public void request(long n) {
+                         }
+                      });
+                     ref.set(observer);
+                 }
+             }))
+             .test();
+
+             Runnable r1 = new Runnable() {
+                 @Override
+                 public void run() {
+                     ts.cancel();
+                 }
+             };
+             Runnable r2 = new Runnable() {
+                 @Override
+                 public void run() {
+                     Subscriber<Object> o = ref.get();
+                     o.onNext(1);
+                     o.onComplete();
+                 }
+             };
+
+             TestHelper.race(r1, r2);
+        }
+    }
+
+    @Test
+    public void supplierDisposeMainBoundaryErrorRace() {
+        final TestException ex = new TestException();
+
+        for (int i = 0; i < TestHelper.RACE_LONG_LOOPS; i++) {
+            List<Throwable> errors = TestHelper.trackPluginErrors();
+            try {
+                final AtomicReference<Subscriber<? super Object>> refMain = new AtomicReference<Subscriber<? super Object>>();
+                final AtomicReference<Subscriber<? super Object>> ref = new AtomicReference<Subscriber<? super Object>>();
+
+                final TestSubscriber<Flowable<Object>> ts = new Flowable<Object>() {
+                    @Override
+                    protected void subscribeActual(Subscriber<? super Object> observer) {
+                        observer.onSubscribe(new BooleanSubscription());
+                        refMain.set(observer);
+                    }
+                }
+                .window(new Callable<Flowable<Object>>() {
+                    int count;
+                    @Override
+                    public Flowable<Object> call() throws Exception {
+                        if (++count > 1) {
+                            return Flowable.never();
+                        }
+                        return (new Flowable<Object>() {
+                            @Override
+                            protected void subscribeActual(Subscriber<? super Object> observer) {
+                                final AtomicInteger counter = new AtomicInteger();
+                                observer.onSubscribe(new Subscription() {
+
+                                    @Override
+                                    public void cancel() {
+                                        // about a microsecond
+                                        for (int i = 0; i < 100; i++) {
+                                            counter.incrementAndGet();
+                                        }
+                                    }
+
+                                    @Override
+                                    public void request(long n) {
+                                    }
+                                });
+                                ref.set(observer);
+                            }
+                        });
+                    }
+                })
+                .test();
+
+                Runnable r1 = new Runnable() {
+                    @Override
+                    public void run() {
+                        ts.cancel();
+                    }
+                };
+                Runnable r2 = new Runnable() {
+                    @Override
+                    public void run() {
+                        Subscriber<Object> o = ref.get();
+                        o.onNext(1);
+                        o.onError(ex);
+                    }
+                };
+
+                TestHelper.race(r1, r2);
+
+                if (!errors.isEmpty()) {
+                    TestHelper.assertUndeliverable(errors, 0, TestException.class);
+                }
+            } finally {
+                RxJavaPlugins.reset();
+            }
+        }
+    }
+
 }

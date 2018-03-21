@@ -15,6 +15,7 @@
  */
 package io.reactivex.internal.operators.flowable;
 
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -28,6 +29,7 @@ import io.reactivex.*;
 import io.reactivex.exceptions.*;
 import io.reactivex.functions.*;
 import io.reactivex.internal.functions.Functions;
+import io.reactivex.internal.operators.flowable.FlowableGroupJoin.*;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.processors.PublishProcessor;
 import io.reactivex.subscribers.TestSubscriber;
@@ -506,25 +508,25 @@ public class FlowableGroupJoinTest {
     @Test
     public void innerErrorRace() {
         for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
-            final PublishProcessor<Object> ps1 = PublishProcessor.create();
-            final PublishProcessor<Object> ps2 = PublishProcessor.create();
+            final PublishProcessor<Object> pp1 = PublishProcessor.create();
+            final PublishProcessor<Object> pp2 = PublishProcessor.create();
 
             List<Throwable> errors = TestHelper.trackPluginErrors();
 
             try {
-                TestSubscriber<Flowable<Integer>> to = Flowable.just(1)
+                TestSubscriber<Flowable<Integer>> ts = Flowable.just(1)
                 .groupJoin(
                     Flowable.just(2).concatWith(Flowable.<Integer>never()),
                     new Function<Integer, Flowable<Object>>() {
                         @Override
                         public Flowable<Object> apply(Integer left) throws Exception {
-                            return ps1;
+                            return pp1;
                         }
                     },
                     new Function<Integer, Flowable<Object>>() {
                         @Override
                         public Flowable<Object> apply(Integer right) throws Exception {
-                            return ps2;
+                            return pp2;
                         }
                     },
                     new BiFunction<Integer, Flowable<Integer>, Flowable<Integer>>() {
@@ -542,28 +544,28 @@ public class FlowableGroupJoinTest {
                 Runnable r1 = new Runnable() {
                     @Override
                     public void run() {
-                        ps1.onError(ex1);
+                        pp1.onError(ex1);
                     }
                 };
                 Runnable r2 = new Runnable() {
                     @Override
                     public void run() {
-                        ps2.onError(ex2);
+                        pp2.onError(ex2);
                     }
                 };
 
                 TestHelper.race(r1, r2);
 
-                to.assertError(Throwable.class).assertSubscribed().assertNotComplete().assertValueCount(1);
+                ts.assertError(Throwable.class).assertSubscribed().assertNotComplete().assertValueCount(1);
 
-                Throwable exc = to.errors().get(0);
+                Throwable exc = ts.errors().get(0);
 
                 if (exc instanceof CompositeException) {
                     List<Throwable> es = TestHelper.compositeList(exc);
                     TestHelper.assertError(es, 0, TestException.class);
                     TestHelper.assertError(es, 1, TestException.class);
                 } else {
-                    to.assertError(TestException.class);
+                    ts.assertError(TestException.class);
                 }
 
                 if (!errors.isEmpty()) {
@@ -578,15 +580,15 @@ public class FlowableGroupJoinTest {
     @Test
     public void outerErrorRace() {
         for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
-            final PublishProcessor<Object> ps1 = PublishProcessor.create();
-            final PublishProcessor<Object> ps2 = PublishProcessor.create();
+            final PublishProcessor<Object> pp1 = PublishProcessor.create();
+            final PublishProcessor<Object> pp2 = PublishProcessor.create();
 
             List<Throwable> errors = TestHelper.trackPluginErrors();
 
             try {
-                TestSubscriber<Object> to = ps1
+                TestSubscriber<Object> ts = pp1
                 .groupJoin(
-                    ps2,
+                    pp2,
                     new Function<Object, Flowable<Object>>() {
                         @Override
                         public Flowable<Object> apply(Object left) throws Exception {
@@ -615,28 +617,28 @@ public class FlowableGroupJoinTest {
                 Runnable r1 = new Runnable() {
                     @Override
                     public void run() {
-                        ps1.onError(ex1);
+                        pp1.onError(ex1);
                     }
                 };
                 Runnable r2 = new Runnable() {
                     @Override
                     public void run() {
-                        ps2.onError(ex2);
+                        pp2.onError(ex2);
                     }
                 };
 
                 TestHelper.race(r1, r2);
 
-                to.assertError(Throwable.class).assertSubscribed().assertNotComplete().assertNoValues();
+                ts.assertError(Throwable.class).assertSubscribed().assertNotComplete().assertNoValues();
 
-                Throwable exc = to.errors().get(0);
+                Throwable exc = ts.errors().get(0);
 
                 if (exc instanceof CompositeException) {
                     List<Throwable> es = TestHelper.compositeList(exc);
                     TestHelper.assertError(es, 0, TestException.class);
                     TestHelper.assertError(es, 1, TestException.class);
                 } else {
-                    to.assertError(TestException.class);
+                    ts.assertError(TestException.class);
                 }
 
                 if (!errors.isEmpty()) {
@@ -650,12 +652,12 @@ public class FlowableGroupJoinTest {
 
     @Test
     public void rightEmission() {
-        final PublishProcessor<Object> ps1 = PublishProcessor.create();
-        final PublishProcessor<Object> ps2 = PublishProcessor.create();
+        final PublishProcessor<Object> pp1 = PublishProcessor.create();
+        final PublishProcessor<Object> pp2 = PublishProcessor.create();
 
-        TestSubscriber<Object> to = ps1
+        TestSubscriber<Object> ts = pp1
         .groupJoin(
-            ps2,
+            pp2,
             new Function<Object, Flowable<Object>>() {
                 @Override
                 public Flowable<Object> apply(Object left) throws Exception {
@@ -678,13 +680,48 @@ public class FlowableGroupJoinTest {
         .flatMap(Functions.<Flowable<Object>>identity())
         .test();
 
-        ps2.onNext(2);
+        pp2.onNext(2);
 
-        ps1.onNext(1);
-        ps1.onComplete();
+        pp1.onNext(1);
+        pp1.onComplete();
 
-        ps2.onComplete();
+        pp2.onComplete();
 
-        to.assertResult(2);
+        ts.assertResult(2);
+    }
+
+    @Test
+    public void leftRightState() {
+        JoinSupport js = mock(JoinSupport.class);
+
+        LeftRightSubscriber o = new LeftRightSubscriber(js, false);
+
+        assertFalse(o.isDisposed());
+
+        o.onNext(1);
+        o.onNext(2);
+
+        o.dispose();
+
+        assertTrue(o.isDisposed());
+
+        verify(js).innerValue(false, 1);
+        verify(js).innerValue(false, 2);
+    }
+
+    @Test
+    public void leftRightEndState() {
+        JoinSupport js = mock(JoinSupport.class);
+
+        LeftRightEndSubscriber o = new LeftRightEndSubscriber(js, false, 0);
+
+        assertFalse(o.isDisposed());
+
+        o.onNext(1);
+        o.onNext(2);
+
+        assertTrue(o.isDisposed());
+
+        verify(js).innerClose(false, o);
     }
 }

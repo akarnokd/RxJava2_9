@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.*;
 
 import io.reactivex.Observer;
 import io.reactivex.Scheduler;
-import io.reactivex.annotations.CheckReturnValue;
+import io.reactivex.annotations.*;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.internal.functions.ObjectHelper;
 import io.reactivex.internal.util.NotificationLite;
@@ -93,8 +93,9 @@ import io.reactivex.plugins.RxJavaPlugins;
  * in a non-blocking and thread-safe manner via {@link #hasValue()}, {@link #getValue()},
  * {@link #getValues()} or {@link #getValues(Object[])}.
  * <p>
- * Note that due to concurrency requirements, a size-bounded {@code ReplaySubject} may hold strong references to more
- * source emissions than specified.
+ * Note that due to concurrency requirements, a size- and time-bounded {@code ReplaySubject} may hold strong references to more
+ * source emissions than specified while it isn't terminated yet. Use the {@link #cleanupBuffer()} to allow
+ * such inaccessible items to be cleaned up by GC once no consumer references it anymore.
  * <dl>
  *  <dt><b>Scheduler:</b></dt>
  *  <dd>{@code ReplaySubject} does not operate by default on a particular {@link io.reactivex.Scheduler} and
@@ -395,6 +396,7 @@ public final class ReplaySubject<T> extends Subject<T> {
     }
 
     @Override
+    @Nullable
     public Throwable getThrowable() {
         Object o = buffer.get();
         if (NotificationLite.isError(o)) {
@@ -408,8 +410,27 @@ public final class ReplaySubject<T> extends Subject<T> {
      * <p>The method is thread-safe.
      * @return a single value the Subject currently has or null if no such value exists
      */
+    @Nullable
     public T getValue() {
         return buffer.getValue();
+    }
+
+    /**
+     * Makes sure the item cached by the head node in a bounded
+     * ReplaySubject is released (as it is never part of a replay).
+     * <p>
+     * By default, live bounded buffers will remember one item before
+     * the currently receivable one to ensure subscribers can always
+     * receive a continuous sequence of items. A terminated ReplaySubject
+     * automatically releases this inaccessible item.
+     * <p>
+     * The method must be called sequentially, similar to the standard
+     * {@code onXXX} methods.
+     * @since 2.1.11 - experimental
+     */
+    @Experimental
+    public void cleanupBuffer() {
+        buffer.trimHead();
     }
 
     /** An empty array to avoid allocation in getValues(). */
@@ -542,6 +563,7 @@ public final class ReplaySubject<T> extends Subject<T> {
 
         int size();
 
+        @Nullable
         T getValue();
 
         T[] getValues(T[] array);
@@ -559,6 +581,12 @@ public final class ReplaySubject<T> extends Subject<T> {
          * @return true if successful
          */
         boolean compareAndSet(Object expected, Object next);
+
+        /**
+         * Make sure an old inaccessible head value is released
+         * in a bounded buffer.
+         */
+        void trimHead();
     }
 
     static final class ReplayDisposable<T> extends AtomicInteger implements Disposable {
@@ -615,11 +643,18 @@ public final class ReplaySubject<T> extends Subject<T> {
         @Override
         public void addFinal(Object notificationLite) {
             buffer.add(notificationLite);
+            trimHead();
             size++;
             done = true;
         }
 
         @Override
+        public void trimHead() {
+            // no-op in this type of buffer
+        }
+
+        @Override
+        @Nullable
         @SuppressWarnings("unchecked")
         public T getValue() {
             int s = size;
@@ -834,10 +869,26 @@ public final class ReplaySubject<T> extends Subject<T> {
             size++;
             t.lazySet(n); // releases both the tail and size
 
+            trimHead();
             done = true;
         }
 
+        /**
+         * Replace a non-empty head node with an empty one to
+         * allow the GC of the inaccessible old value.
+         */
         @Override
+        public void trimHead() {
+            Node<Object> h = head;
+            if (h.value != null) {
+                Node<Object> n = new Node<Object>(null);
+                n.lazySet(h.get());
+                head = n;
+            }
+        }
+
+        @Override
+        @Nullable
         @SuppressWarnings("unchecked")
         public T getValue() {
             Node<Object> prev = null;
@@ -1041,12 +1092,24 @@ public final class ReplaySubject<T> extends Subject<T> {
             for (;;) {
                 TimedNode<Object> next = h.get();
                 if (next.get() == null) {
-                    head = h;
+                    if (h.value != null) {
+                        TimedNode<Object> lasth = new TimedNode<Object>(null, 0L);
+                        lasth.lazySet(h.get());
+                        head = lasth;
+                    } else {
+                        head = h;
+                    }
                     break;
                 }
 
                 if (next.time > limit) {
-                    head = h;
+                    if (h.value != null) {
+                        TimedNode<Object> lasth = new TimedNode<Object>(null, 0L);
+                        lasth.lazySet(h.get());
+                        head = lasth;
+                    } else {
+                        head = h;
+                    }
                     break;
                 }
 
@@ -1079,7 +1142,22 @@ public final class ReplaySubject<T> extends Subject<T> {
             done = true;
         }
 
+        /**
+         * Replace a non-empty head node with an empty one to
+         * allow the GC of the inaccessible old value.
+         */
         @Override
+        public void trimHead() {
+            TimedNode<Object> h = head;
+            if (h.value != null) {
+                TimedNode<Object> n = new TimedNode<Object>(null, 0);
+                n.lazySet(h.get());
+                head = n;
+            }
+        }
+
+        @Override
+        @Nullable
         @SuppressWarnings("unchecked")
         public T getValue() {
             TimedNode<Object> prev = null;

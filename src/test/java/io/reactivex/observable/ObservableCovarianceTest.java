@@ -47,7 +47,7 @@ public class ObservableCovarianceTest {
 
     @Test
     public void testSortedList() {
-        Comparator<Media> SORT_FUNCTION = new Comparator<Media>() {
+        Comparator<Media> sortFunction = new Comparator<Media>() {
             @Override
             public int compare(Media t1, Media t2) {
                 return 1;
@@ -56,17 +56,17 @@ public class ObservableCovarianceTest {
 
         // this one would work without the covariance generics
         Observable<Media> o = Observable.just(new Movie(), new TVSeason(), new Album());
-        o.toSortedList(SORT_FUNCTION);
+        o.toSortedList(sortFunction);
 
         // this one would NOT work without the covariance generics
         Observable<Movie> o2 = Observable.just(new Movie(), new ActionMovie(), new HorrorMovie());
-        o2.toSortedList(SORT_FUNCTION);
+        o2.toSortedList(sortFunction);
     }
 
     @Test
     public void testGroupByCompose() {
         Observable<Movie> movies = Observable.just(new HorrorMovie(), new ActionMovie(), new Movie());
-        TestObserver<String> ts = new TestObserver<String>();
+        TestObserver<String> to = new TestObserver<String>();
         movies
         .groupBy(new Function<Movie, Object>() {
             @Override
@@ -105,11 +105,11 @@ public class ObservableCovarianceTest {
                 });
             }
         })
-        .subscribe(ts);
-        ts.assertTerminated();
-        ts.assertNoErrors();
+        .subscribe(to);
+        to.assertTerminated();
+        to.assertNoErrors();
         //        System.out.println(ts.getOnNextEvents());
-        assertEquals(6, ts.valueCount());
+        assertEquals(6, to.valueCount());
     }
 
     @SuppressWarnings("unused")

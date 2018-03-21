@@ -59,7 +59,9 @@ public final class ObservableConcatMapSingle<T, R> extends Observable<R> {
 
     @Override
     protected void subscribeActual(Observer<? super R> s) {
-        source.subscribe(new ConcatMapSingleMainObserver<T, R>(s, mapper, prefetch, errorMode));
+        if (!ScalarXMapZHelper.tryAsSingle(source, mapper, s)) {
+            source.subscribe(new ConcatMapSingleMainObserver<T, R>(s, mapper, prefetch, errorMode));
+        }
     }
 
     static final class ConcatMapSingleMainObserver<T, R>
@@ -226,10 +228,10 @@ public final class ObservableConcatMapSingle<T, R> extends Observable<R> {
                             break;
                         }
 
-                        SingleSource<? extends R> ms;
+                        SingleSource<? extends R> ss;
 
                         try {
-                            ms = ObjectHelper.requireNonNull(mapper.apply(v), "The mapper returned a null SingleSource");
+                            ss = ObjectHelper.requireNonNull(mapper.apply(v), "The mapper returned a null SingleSource");
                         } catch (Throwable ex) {
                             Exceptions.throwIfFatal(ex);
                             upstream.dispose();
@@ -241,7 +243,7 @@ public final class ObservableConcatMapSingle<T, R> extends Observable<R> {
                         }
 
                         state = STATE_ACTIVE;
-                        ms.subscribe(inner);
+                        ss.subscribe(inner);
                         break;
                     } else if (s == STATE_RESULT_VALUE) {
                         R w = item;

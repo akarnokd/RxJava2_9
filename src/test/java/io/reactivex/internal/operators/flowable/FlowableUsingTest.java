@@ -29,6 +29,7 @@ import io.reactivex.disposables.*;
 import io.reactivex.exceptions.*;
 import io.reactivex.functions.*;
 import io.reactivex.internal.functions.Functions;
+import io.reactivex.internal.subscriptions.BooleanSubscription;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.subscribers.TestSubscriber;
 
@@ -525,7 +526,7 @@ public class FlowableUsingTest {
 
     @Test
     public void supplierDisposerCrash() {
-        TestSubscriber<Object> to = Flowable.using(new Callable<Object>() {
+        TestSubscriber<Object> ts = Flowable.using(new Callable<Object>() {
             @Override
             public Object call() throws Exception {
                 return 1;
@@ -544,7 +545,7 @@ public class FlowableUsingTest {
         .test()
         .assertFailure(CompositeException.class);
 
-        List<Throwable> errors = TestHelper.compositeList(to.errors().get(0));
+        List<Throwable> errors = TestHelper.compositeList(ts.errors().get(0));
 
         TestHelper.assertError(errors, 0, TestException.class, "First");
         TestHelper.assertError(errors, 1, TestException.class, "Second");
@@ -552,7 +553,7 @@ public class FlowableUsingTest {
 
     @Test
     public void eagerOnErrorDisposerCrash() {
-        TestSubscriber<Object> to = Flowable.using(new Callable<Object>() {
+        TestSubscriber<Object> ts = Flowable.using(new Callable<Object>() {
             @Override
             public Object call() throws Exception {
                 return 1;
@@ -571,7 +572,7 @@ public class FlowableUsingTest {
         .test()
         .assertFailure(CompositeException.class);
 
-        List<Throwable> errors = TestHelper.compositeList(to.errors().get(0));
+        List<Throwable> errors = TestHelper.compositeList(ts.errors().get(0));
 
         TestHelper.assertError(errors, 0, TestException.class, "First");
         TestHelper.assertError(errors, 1, TestException.class, "Second");
@@ -636,5 +637,46 @@ public class FlowableUsingTest {
         .test()
         .assertFailureAndMessage(NullPointerException.class, "The sourceSupplier returned a null Publisher")
         ;
+    }
+
+    @Test
+    public void doubleOnSubscribe() {
+        TestHelper.checkDoubleOnSubscribeFlowable(new Function<Flowable<Object>, Flowable<Object>>() {
+            @Override
+            public Flowable<Object> apply(Flowable<Object> o)
+                    throws Exception {
+                return Flowable.using(Functions.justCallable(1), Functions.justFunction(o), Functions.emptyConsumer());
+            }
+        });
+    }
+
+    @Test
+    public void eagerDisposedOnComplete() {
+        final TestSubscriber<Integer> ts = new TestSubscriber<Integer>();
+
+        Flowable.using(Functions.justCallable(1), Functions.justFunction(new Flowable<Integer>() {
+            @Override
+            protected void subscribeActual(Subscriber<? super Integer> observer) {
+                observer.onSubscribe(new BooleanSubscription());
+                ts.cancel();
+                observer.onComplete();
+            }
+        }), Functions.emptyConsumer(), true)
+        .subscribe(ts);
+    }
+
+    @Test
+    public void eagerDisposedOnError() {
+        final TestSubscriber<Integer> ts = new TestSubscriber<Integer>();
+
+        Flowable.using(Functions.justCallable(1), Functions.justFunction(new Flowable<Integer>() {
+            @Override
+            protected void subscribeActual(Subscriber<? super Integer> observer) {
+                observer.onSubscribe(new BooleanSubscription());
+                ts.cancel();
+                observer.onError(new TestException());
+            }
+        }), Functions.emptyConsumer(), true)
+        .subscribe(ts);
     }
 }

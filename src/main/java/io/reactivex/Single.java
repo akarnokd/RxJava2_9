@@ -1279,6 +1279,8 @@ public abstract class Single<T> implements SingleSource<T> {
      * value and calls a zipper function with an array of these values to return a result
      * to be emitted to downstream.
      * <p>
+     * If the {@code Iterable} of {@link SingleSource}s is empty a {@link NoSuchElementException} error is signalled after subscription.
+     * <p>
      * Note on method signature: since Java doesn't allow creating a generic array with {@code new T[]}, the
      * implementation of this operator has to create an {@code Object[]} instead. Unfortunately, a
      * {@code Function<Integer[], R>} passed to the method would trigger a {@code ClassCastException}.
@@ -1294,7 +1296,8 @@ public abstract class Single<T> implements SingleSource<T> {
      * </dl>
      * @param <T> the common value type
      * @param <R> the result value type
-     * @param sources the Iterable sequence of SingleSource instances
+     * @param sources the Iterable sequence of SingleSource instances. An empty sequence will result in an
+     *                {@code onError} signal of {@link NoSuchElementException}.
      * @param zipper the function that receives an array with values from each SingleSource
      *               and should return a value to be emitted to downstream
      * @return the new Single instance
@@ -1721,6 +1724,8 @@ public abstract class Single<T> implements SingleSource<T> {
      * value and calls a zipper function with an array of these values to return a result
      * to be emitted to downstream.
      * <p>
+     * If the array of {@link SingleSource}s is empty a {@link NoSuchElementException} error is signalled immediately.
+     * <p>
      * Note on method signature: since Java doesn't allow creating a generic array with {@code new T[]}, the
      * implementation of this operator has to create an {@code Object[]} instead. Unfortunately, a
      * {@code Function<Integer[], R>} passed to the method would trigger a {@code ClassCastException}.
@@ -1736,7 +1741,8 @@ public abstract class Single<T> implements SingleSource<T> {
      * </dl>
      * @param <T> the common value type
      * @param <R> the result value type
-     * @param sources the array of SingleSource instances
+     * @param sources the array of SingleSource instances. An empty sequence will result in an
+     *                {@code onError} signal of {@link NoSuchElementException}.
      * @param zipper the function that receives an array with values from each SingleSource
      *               and should return a value to be emitted to downstream
      * @return the new Single instance
@@ -2348,7 +2354,7 @@ public abstract class Single<T> implements SingleSource<T> {
      * Returns a Flowable that emits items based on applying a specified function to the item emitted by the
      * source Single, where that function returns a Publisher.
      * <p>
-     * <img width="640" height="305" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/Single.flatMapObservable.png" alt="">
+     * <img width="640" height="305" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/Single.flatMapPublisher.png" alt="">
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The returned {@code Flowable} honors the backpressure of the downstream consumer
@@ -3648,9 +3654,9 @@ public abstract class Single<T> implements SingleSource<T> {
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
     public final TestObserver<T> test() {
-        TestObserver<T> ts = new TestObserver<T>();
-        subscribe(ts);
-        return ts;
+        TestObserver<T> to = new TestObserver<T>();
+        subscribe(to);
+        return to;
     }
 
     /**
@@ -3667,14 +3673,14 @@ public abstract class Single<T> implements SingleSource<T> {
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
     public final TestObserver<T> test(boolean cancelled) {
-        TestObserver<T> ts = new TestObserver<T>();
+        TestObserver<T> to = new TestObserver<T>();
 
         if (cancelled) {
-            ts.cancel();
+            to.cancel();
         }
 
-        subscribe(ts);
-        return ts;
+        subscribe(to);
+        return to;
     }
 
     private static <T> Single<T> toSingle(Flowable<T> source) {

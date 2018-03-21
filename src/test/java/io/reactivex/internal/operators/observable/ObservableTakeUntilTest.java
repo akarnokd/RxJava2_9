@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import io.reactivex.*;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Function;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subjects.PublishSubject;
 
@@ -187,21 +188,21 @@ public class ObservableTakeUntilTest {
         PublishSubject<Integer> source = PublishSubject.create();
         PublishSubject<Integer> until = PublishSubject.create();
 
-        TestObserver<Integer> ts = new TestObserver<Integer>();
+        TestObserver<Integer> to = new TestObserver<Integer>();
 
-        source.takeUntil(until).subscribe(ts);
+        source.takeUntil(until).subscribe(to);
 
         assertTrue(source.hasObservers());
         assertTrue(until.hasObservers());
 
         source.onNext(1);
 
-        ts.assertValue(1);
+        to.assertValue(1);
         until.onNext(1);
 
-        ts.assertValue(1);
-        ts.assertNoErrors();
-        ts.assertTerminated();
+        to.assertValue(1);
+        to.assertNoErrors();
+        to.assertTerminated();
 
         assertFalse("Source still has observers", source.hasObservers());
         assertFalse("Until still has observers", until.hasObservers());
@@ -213,9 +214,9 @@ public class ObservableTakeUntilTest {
         PublishSubject<Integer> source = PublishSubject.create();
         PublishSubject<Integer> until = PublishSubject.create();
 
-        TestObserver<Integer> ts = new TestObserver<Integer>();
+        TestObserver<Integer> to = new TestObserver<Integer>();
 
-        source.takeUntil(until).subscribe(ts);
+        source.takeUntil(until).subscribe(to);
 
         assertTrue(source.hasObservers());
         assertTrue(until.hasObservers());
@@ -223,9 +224,9 @@ public class ObservableTakeUntilTest {
         source.onNext(1);
         source.onComplete();
 
-        ts.assertValue(1);
-        ts.assertNoErrors();
-        ts.assertTerminated();
+        to.assertValue(1);
+        to.assertNoErrors();
+        to.assertTerminated();
 
         assertFalse("Source still has observers", source.hasObservers());
         assertFalse("Until still has observers", until.hasObservers());
@@ -237,18 +238,18 @@ public class ObservableTakeUntilTest {
         PublishSubject<Integer> source = PublishSubject.create();
         PublishSubject<Integer> until = PublishSubject.create();
 
-        TestObserver<Integer> ts = new TestObserver<Integer>();
+        TestObserver<Integer> to = new TestObserver<Integer>();
 
-        source.takeUntil(until).take(1).subscribe(ts);
+        source.takeUntil(until).take(1).subscribe(to);
 
         assertTrue(source.hasObservers());
         assertTrue(until.hasObservers());
 
         source.onNext(1);
 
-        ts.assertValue(1);
-        ts.assertNoErrors();
-        ts.assertTerminated();
+        to.assertValue(1);
+        to.assertNoErrors();
+        to.assertTerminated();
 
         assertFalse("Source still has observers", source.hasObservers());
         assertFalse("Until still has observers", until.hasObservers());
@@ -259,5 +260,15 @@ public class ObservableTakeUntilTest {
     @Test
     public void dispose() {
         TestHelper.checkDisposed(PublishSubject.create().takeUntil(Observable.never()));
+    }
+
+    @Test
+    public void doubleOnSubscribe() {
+        TestHelper.checkDoubleOnSubscribeObservable(new Function<Observable<Integer>, Observable<Integer>>() {
+            @Override
+            public Observable<Integer> apply(Observable<Integer> o) throws Exception {
+                return o.takeUntil(Observable.never());
+            }
+        });
     }
 }

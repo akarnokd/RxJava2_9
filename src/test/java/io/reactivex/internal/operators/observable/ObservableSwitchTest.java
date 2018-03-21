@@ -29,6 +29,7 @@ import io.reactivex.exceptions.*;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.functions.Functions;
+import io.reactivex.internal.schedulers.ImmediateThinScheduler;
 import io.reactivex.internal.util.ExceptionHelper;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -461,7 +462,7 @@ public class ObservableSwitchTest {
         .share()
         ;
 
-        TestObserver<String> ts = new TestObserver<String>() {
+        TestObserver<String> to = new TestObserver<String>() {
             @Override
             public void onNext(String t) {
                 super.onNext(t);
@@ -471,16 +472,16 @@ public class ObservableSwitchTest {
                 }
             }
         };
-        src.subscribe(ts);
+        src.subscribe(to);
 
-        ts.awaitTerminalEvent(10, TimeUnit.SECONDS);
+        to.awaitTerminalEvent(10, TimeUnit.SECONDS);
 
-        System.out.println("> testIssue2654: " + ts.valueCount());
+        System.out.println("> testIssue2654: " + to.valueCount());
 
-        ts.assertTerminated();
-        ts.assertNoErrors();
+        to.assertTerminated();
+        to.assertNoErrors();
 
-        Assert.assertEquals(250, ts.valueCount());
+        Assert.assertEquals(250, to.valueCount());
     }
 
 
@@ -488,10 +489,10 @@ public class ObservableSwitchTest {
     public void delayErrors() {
         PublishSubject<ObservableSource<Integer>> source = PublishSubject.create();
 
-        TestObserver<Integer> ts = source.switchMapDelayError(Functions.<ObservableSource<Integer>>identity())
+        TestObserver<Integer> to = source.switchMapDelayError(Functions.<ObservableSource<Integer>>identity())
         .test();
 
-        ts.assertNoValues()
+        to.assertNoValues()
         .assertNoErrors()
         .assertNotComplete();
 
@@ -507,11 +508,11 @@ public class ObservableSwitchTest {
 
         source.onError(new TestException("Forced failure 3"));
 
-        ts.assertValues(1, 2, 3, 4, 5)
+        to.assertValues(1, 2, 3, 4, 5)
         .assertNotComplete()
         .assertError(CompositeException.class);
 
-        List<Throwable> errors = ExceptionHelper.flatten(ts.errors().get(0));
+        List<Throwable> errors = ExceptionHelper.flatten(to.errors().get(0));
 
         TestHelper.assertError(errors, 0, TestException.class, "Forced failure 1");
         TestHelper.assertError(errors, 1, TestException.class, "Forced failure 2");
@@ -522,40 +523,40 @@ public class ObservableSwitchTest {
     public void switchOnNextDelayError() {
         PublishSubject<Observable<Integer>> ps = PublishSubject.create();
 
-        TestObserver<Integer> ts = Observable.switchOnNextDelayError(ps).test();
+        TestObserver<Integer> to = Observable.switchOnNextDelayError(ps).test();
 
         ps.onNext(Observable.just(1));
         ps.onNext(Observable.range(2, 4));
         ps.onComplete();
 
-        ts.assertResult(1, 2, 3, 4, 5);
+        to.assertResult(1, 2, 3, 4, 5);
     }
 
     @Test
     public void switchOnNextDelayErrorWithError() {
         PublishSubject<Observable<Integer>> ps = PublishSubject.create();
 
-        TestObserver<Integer> ts = Observable.switchOnNextDelayError(ps).test();
+        TestObserver<Integer> to = Observable.switchOnNextDelayError(ps).test();
 
         ps.onNext(Observable.just(1));
         ps.onNext(Observable.<Integer>error(new TestException()));
         ps.onNext(Observable.range(2, 4));
         ps.onComplete();
 
-        ts.assertFailure(TestException.class, 1, 2, 3, 4, 5);
+        to.assertFailure(TestException.class, 1, 2, 3, 4, 5);
     }
 
     @Test
     public void switchOnNextDelayErrorBufferSize() {
         PublishSubject<Observable<Integer>> ps = PublishSubject.create();
 
-        TestObserver<Integer> ts = Observable.switchOnNextDelayError(ps, 2).test();
+        TestObserver<Integer> to = Observable.switchOnNextDelayError(ps, 2).test();
 
         ps.onNext(Observable.just(1));
         ps.onNext(Observable.range(2, 4));
         ps.onComplete();
 
-        ts.assertResult(1, 2, 3, 4, 5);
+        to.assertResult(1, 2, 3, 4, 5);
     }
 
     @Test
@@ -610,17 +611,17 @@ public class ObservableSwitchTest {
 
     @Test
     public void switchMapInnerCancelled() {
-        PublishSubject<Integer> pp = PublishSubject.create();
+        PublishSubject<Integer> ps = PublishSubject.create();
 
-        TestObserver<Integer> ts = Observable.just(1)
-                .switchMap(Functions.justFunction(pp))
+        TestObserver<Integer> to = Observable.just(1)
+                .switchMap(Functions.justFunction(ps))
                 .test();
 
-        assertTrue(pp.hasObservers());
+        assertTrue(ps.hasObservers());
 
-        ts.cancel();
+        to.cancel();
 
-        assertFalse(pp.hasObservers());
+        assertFalse(ps.hasObservers());
     }
 
     @Test
@@ -1053,5 +1054,116 @@ public class ObservableSwitchTest {
                 RxJavaPlugins.reset();
             }
         }
+    }
+
+    @Test
+    public void asyncFused() {
+        Observable.just(1).hide()
+        .switchMap(Functions.justFunction(
+                Observable.range(1, 5)
+                .observeOn(ImmediateThinScheduler.INSTANCE)
+        ))
+        .test()
+        .assertResult(1, 2, 3, 4, 5);
+    }
+
+    @Test
+    public void syncFusedMaybe() {
+        Observable.range(1, 5).hide()
+        .switchMap(Functions.justFunction(
+                Maybe.just(1).toObservable()
+        ))
+        .test()
+        .assertResult(1, 1, 1, 1, 1);
+    }
+
+    @Test
+    public void syncFusedSingle() {
+        Observable.range(1, 5).hide()
+        .switchMap(Functions.justFunction(
+                Single.just(1).toObservable()
+        ))
+        .test()
+        .assertResult(1, 1, 1, 1, 1);
+    }
+
+    @Test
+    public void syncFusedCompletable() {
+        Observable.range(1, 5).hide()
+        .switchMap(Functions.justFunction(
+                Completable.complete().toObservable()
+        ))
+        .test()
+        .assertResult();
+    }
+
+    @Test
+    public void asyncFusedRejecting() {
+        Observable.just(1).hide()
+        .switchMap(Functions.justFunction(
+                TestHelper.rejectObservableFusion()
+        ))
+        .test()
+        .assertEmpty();
+    }
+
+    @Test
+    public void asyncFusedPollCrash() {
+        PublishSubject<Integer> ps = PublishSubject.create();
+
+        TestObserver<Integer> to = ps
+        .switchMap(Functions.justFunction(
+                Observable.range(1, 5)
+                .observeOn(ImmediateThinScheduler.INSTANCE)
+                .map(new Function<Integer, Integer>() {
+                    @Override
+                    public Integer apply(Integer v) throws Exception {
+                        throw new TestException();
+                    }
+                })
+        ))
+        .test();
+
+        to.assertEmpty();
+
+        ps.onNext(1);
+
+        to
+        .assertFailure(TestException.class);
+
+        assertFalse(ps.hasObservers());
+    }
+
+    @Test
+    public void asyncFusedPollCrashDelayError() {
+        PublishSubject<Integer> ps = PublishSubject.create();
+
+        TestObserver<Integer> to = ps
+        .switchMapDelayError(Functions.justFunction(
+                Observable.range(1, 5)
+                .observeOn(ImmediateThinScheduler.INSTANCE)
+                .map(new Function<Integer, Integer>() {
+                    @Override
+                    public Integer apply(Integer v) throws Exception {
+                        throw new TestException();
+                    }
+                })
+        ))
+        .test();
+
+        to.assertEmpty();
+
+        ps.onNext(1);
+
+        assertTrue(ps.hasObservers());
+
+        to.assertEmpty();
+
+        ps.onComplete();
+
+        to
+        .assertFailure(TestException.class);
+
+        assertFalse(ps.hasObservers());
     }
 }

@@ -19,7 +19,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.*;
 
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -31,7 +31,7 @@ import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.disposables.*;
 import io.reactivex.exceptions.TestException;
-import io.reactivex.functions.Function;
+import io.reactivex.functions.*;
 import io.reactivex.internal.functions.Functions;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -328,14 +328,14 @@ public class ObservableTimeoutWithSelectorTest {
 
         }).when(o).onComplete();
 
-        final TestObserver<Integer> ts = new TestObserver<Integer>(o);
+        final TestObserver<Integer> to = new TestObserver<Integer>(o);
 
         new Thread(new Runnable() {
 
             @Override
             public void run() {
                 PublishSubject<Integer> source = PublishSubject.create();
-                source.timeout(timeoutFunc, Observable.just(3)).subscribe(ts);
+                source.timeout(timeoutFunc, Observable.just(3)).subscribe(to);
                 source.onNext(1); // start timeout
                 try {
                     if (!enteredTimeoutOne.await(30, TimeUnit.SECONDS)) {
@@ -545,5 +545,315 @@ public class ObservableTimeoutWithSelectorTest {
         assertFalse(ps.hasObservers());
 
         to.assertResult(1);
+    }
+
+    @Test
+    public void lateOnTimeoutError() {
+        for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
+            List<Throwable> errors = TestHelper.trackPluginErrors();
+            try {
+                final PublishSubject<Integer> ps = PublishSubject.create();
+
+                final Observer<?>[] sub = { null, null };
+
+                final Observable<Integer> pp2 = new Observable<Integer>() {
+
+                    int count;
+
+                    @Override
+                    protected void subscribeActual(
+                            Observer<? super Integer> s) {
+                        s.onSubscribe(Disposables.empty());
+                        sub[count++] = s;
+                    }
+                };
+
+                TestObserver<Integer> to = ps.timeout(Functions.justFunction(pp2)).test();
+
+                ps.onNext(0);
+
+                Runnable r1 = new Runnable() {
+                    @Override
+                    public void run() {
+                        ps.onNext(1);
+                    }
+                };
+
+                final Throwable ex = new TestException();
+
+                Runnable r2 = new Runnable() {
+                    @Override
+                    public void run() {
+                        sub[0].onError(ex);
+                    }
+                };
+
+                TestHelper.race(r1, r2);
+
+                to.assertValueAt(0, 0);
+
+                if (!errors.isEmpty()) {
+                    TestHelper.assertUndeliverable(errors, 0, TestException.class);
+                }
+            } finally {
+                RxJavaPlugins.reset();
+            }
+        }
+    }
+
+    @Test
+    public void lateOnTimeoutFallbackRace() {
+        for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
+            List<Throwable> errors = TestHelper.trackPluginErrors();
+            try {
+                final PublishSubject<Integer> ps = PublishSubject.create();
+
+                final Observer<?>[] sub = { null, null };
+
+                final Observable<Integer> pp2 = new Observable<Integer>() {
+
+                    int count;
+
+                    @Override
+                    protected void subscribeActual(
+                            Observer<? super Integer> s) {
+                        assertFalse(((Disposable)s).isDisposed());
+                        s.onSubscribe(Disposables.empty());
+                        sub[count++] = s;
+                    }
+                };
+
+                TestObserver<Integer> to = ps.timeout(Functions.justFunction(pp2), Observable.<Integer>never()).test();
+
+                ps.onNext(0);
+
+                Runnable r1 = new Runnable() {
+                    @Override
+                    public void run() {
+                        ps.onNext(1);
+                    }
+                };
+
+                final Throwable ex = new TestException();
+
+                Runnable r2 = new Runnable() {
+                    @Override
+                    public void run() {
+                        sub[0].onError(ex);
+                    }
+                };
+
+                TestHelper.race(r1, r2);
+
+                to.assertValueAt(0, 0);
+
+                if (!errors.isEmpty()) {
+                    TestHelper.assertUndeliverable(errors, 0, TestException.class);
+                }
+            } finally {
+                RxJavaPlugins.reset();
+            }
+        }
+    }
+
+    @Test
+    public void onErrorOnTimeoutRace() {
+        for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
+            List<Throwable> errors = TestHelper.trackPluginErrors();
+            try {
+                final PublishSubject<Integer> ps = PublishSubject.create();
+
+                final Observer<?>[] sub = { null, null };
+
+                final Observable<Integer> pp2 = new Observable<Integer>() {
+
+                    int count;
+
+                    @Override
+                    protected void subscribeActual(
+                            Observer<? super Integer> s) {
+                        assertFalse(((Disposable)s).isDisposed());
+                        s.onSubscribe(Disposables.empty());
+                        sub[count++] = s;
+                    }
+                };
+
+                TestObserver<Integer> to = ps.timeout(Functions.justFunction(pp2)).test();
+
+                ps.onNext(0);
+
+                final Throwable ex = new TestException();
+
+                Runnable r1 = new Runnable() {
+                    @Override
+                    public void run() {
+                        ps.onError(ex);
+                    }
+                };
+
+                Runnable r2 = new Runnable() {
+                    @Override
+                    public void run() {
+                        sub[0].onComplete();
+                    }
+                };
+
+                TestHelper.race(r1, r2);
+
+                to.assertValueAt(0, 0);
+
+                if (!errors.isEmpty()) {
+                    TestHelper.assertUndeliverable(errors, 0, TestException.class);
+                }
+            } finally {
+                RxJavaPlugins.reset();
+            }
+        }
+    }
+
+    @Test
+    public void onCompleteOnTimeoutRace() {
+        for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
+            List<Throwable> errors = TestHelper.trackPluginErrors();
+            try {
+                final PublishSubject<Integer> ps = PublishSubject.create();
+
+                final Observer<?>[] sub = { null, null };
+
+                final Observable<Integer> pp2 = new Observable<Integer>() {
+
+                    int count;
+
+                    @Override
+                    protected void subscribeActual(
+                            Observer<? super Integer> s) {
+                        assertFalse(((Disposable)s).isDisposed());
+                        s.onSubscribe(Disposables.empty());
+                        sub[count++] = s;
+                    }
+                };
+
+                TestObserver<Integer> to = ps.timeout(Functions.justFunction(pp2)).test();
+
+                ps.onNext(0);
+
+                Runnable r1 = new Runnable() {
+                    @Override
+                    public void run() {
+                        ps.onComplete();
+                    }
+                };
+
+                Runnable r2 = new Runnable() {
+                    @Override
+                    public void run() {
+                        sub[0].onComplete();
+                    }
+                };
+
+                TestHelper.race(r1, r2);
+
+                to.assertValueAt(0, 0);
+
+                if (!errors.isEmpty()) {
+                    TestHelper.assertUndeliverable(errors, 0, TestException.class);
+                }
+            } finally {
+                RxJavaPlugins.reset();
+            }
+        }
+    }
+
+    @Test
+    public void onCompleteOnTimeoutRaceFallback() {
+        for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
+            List<Throwable> errors = TestHelper.trackPluginErrors();
+            try {
+                final PublishSubject<Integer> ps = PublishSubject.create();
+
+                final Observer<?>[] sub = { null, null };
+
+                final Observable<Integer> pp2 = new Observable<Integer>() {
+
+                    int count;
+
+                    @Override
+                    protected void subscribeActual(
+                            Observer<? super Integer> s) {
+                        assertFalse(((Disposable)s).isDisposed());
+                        s.onSubscribe(Disposables.empty());
+                        sub[count++] = s;
+                    }
+                };
+
+                TestObserver<Integer> to = ps.timeout(Functions.justFunction(pp2), Observable.<Integer>never()).test();
+
+                ps.onNext(0);
+
+                Runnable r1 = new Runnable() {
+                    @Override
+                    public void run() {
+                        ps.onComplete();
+                    }
+                };
+
+                Runnable r2 = new Runnable() {
+                    @Override
+                    public void run() {
+                        sub[0].onComplete();
+                    }
+                };
+
+                TestHelper.race(r1, r2);
+
+                to.assertValueAt(0, 0);
+
+                if (!errors.isEmpty()) {
+                    TestHelper.assertUndeliverable(errors, 0, TestException.class);
+                }
+            } finally {
+                RxJavaPlugins.reset();
+            }
+        }
+    }
+
+    @Test
+    public void disposedUpfront() {
+        PublishSubject<Integer> ps = PublishSubject.create();
+        final AtomicInteger counter = new AtomicInteger();
+
+        Observable<Object> timeoutAndFallback = Observable.never().doOnSubscribe(new Consumer<Disposable>() {
+            @Override
+            public void accept(Disposable s) throws Exception {
+                counter.incrementAndGet();
+            }
+        });
+
+        ps
+        .timeout(timeoutAndFallback, Functions.justFunction(timeoutAndFallback))
+        .test(true)
+        .assertEmpty();
+
+        assertEquals(0, counter.get());
+    }
+
+    @Test
+    public void disposedUpfrontFallback() {
+        PublishSubject<Object> ps = PublishSubject.create();
+        final AtomicInteger counter = new AtomicInteger();
+
+        Observable<Object> timeoutAndFallback = Observable.never().doOnSubscribe(new Consumer<Disposable>() {
+            @Override
+            public void accept(Disposable s) throws Exception {
+                counter.incrementAndGet();
+            }
+        });
+
+        ps
+        .timeout(timeoutAndFallback, Functions.justFunction(timeoutAndFallback), timeoutAndFallback)
+        .test(true)
+        .assertEmpty();
+
+        assertEquals(0, counter.get());
     }
 }

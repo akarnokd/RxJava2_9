@@ -24,6 +24,7 @@ import io.reactivex.*;
 import io.reactivex.exceptions.*;
 import io.reactivex.functions.*;
 import io.reactivex.internal.functions.Functions;
+import io.reactivex.internal.schedulers.ImmediateThinScheduler;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.subjects.*;
@@ -113,23 +114,36 @@ public class ObservableConcatMapCompletableTest {
     }
 
     @Test
+    public void mapperCrashHidden() {
+        Observable.just(1).hide()
+        .concatMapCompletable(new Function<Integer, CompletableSource>() {
+            @Override
+            public CompletableSource apply(Integer v) throws Exception {
+                throw new TestException();
+            }
+        })
+        .test()
+        .assertFailure(TestException.class);
+    }
+
+    @Test
     public void immediateError() {
-        PublishSubject<Integer> pp = PublishSubject.create();
+        PublishSubject<Integer> ps = PublishSubject.create();
         CompletableSubject cs = CompletableSubject.create();
 
-        TestObserver<Void> to = pp.concatMapCompletable(
+        TestObserver<Void> to = ps.concatMapCompletable(
                 Functions.justFunction(cs)).test();
 
         to.assertEmpty();
 
-        assertTrue(pp.hasObservers());
+        assertTrue(ps.hasObservers());
         assertFalse(cs.hasObservers());
 
-        pp.onNext(1);
+        ps.onNext(1);
 
         assertTrue(cs.hasObservers());
 
-        pp.onError(new TestException());
+        ps.onError(new TestException());
 
         assertFalse(cs.hasObservers());
 
@@ -138,46 +152,46 @@ public class ObservableConcatMapCompletableTest {
 
     @Test
     public void immediateError2() {
-        PublishSubject<Integer> pp = PublishSubject.create();
+        PublishSubject<Integer> ps = PublishSubject.create();
         CompletableSubject cs = CompletableSubject.create();
 
-        TestObserver<Void> to = pp.concatMapCompletable(
+        TestObserver<Void> to = ps.concatMapCompletable(
                 Functions.justFunction(cs)).test();
 
         to.assertEmpty();
 
-        assertTrue(pp.hasObservers());
+        assertTrue(ps.hasObservers());
         assertFalse(cs.hasObservers());
 
-        pp.onNext(1);
+        ps.onNext(1);
 
         assertTrue(cs.hasObservers());
 
         cs.onError(new TestException());
 
-        assertFalse(pp.hasObservers());
+        assertFalse(ps.hasObservers());
 
         to.assertFailure(TestException.class);
     }
 
     @Test
     public void boundaryError() {
-        PublishSubject<Integer> pp = PublishSubject.create();
+        PublishSubject<Integer> ps = PublishSubject.create();
         CompletableSubject cs = CompletableSubject.create();
 
-        TestObserver<Void> to = pp.concatMapCompletableDelayError(
+        TestObserver<Void> to = ps.concatMapCompletableDelayError(
                 Functions.justFunction(cs), false).test();
 
         to.assertEmpty();
 
-        assertTrue(pp.hasObservers());
+        assertTrue(ps.hasObservers());
         assertFalse(cs.hasObservers());
 
-        pp.onNext(1);
+        ps.onNext(1);
 
         assertTrue(cs.hasObservers());
 
-        pp.onError(new TestException());
+        ps.onError(new TestException());
 
         assertTrue(cs.hasObservers());
 
@@ -190,11 +204,11 @@ public class ObservableConcatMapCompletableTest {
 
     @Test
     public void endError() {
-        PublishSubject<Integer> pp = PublishSubject.create();
+        PublishSubject<Integer> ps = PublishSubject.create();
         final CompletableSubject cs = CompletableSubject.create();
         final CompletableSubject cs2 = CompletableSubject.create();
 
-        TestObserver<Void> to = pp.concatMapCompletableDelayError(
+        TestObserver<Void> to = ps.concatMapCompletableDelayError(
                 new Function<Integer, CompletableSource>() {
                     @Override
                     public CompletableSource apply(Integer v) throws Exception {
@@ -209,28 +223,28 @@ public class ObservableConcatMapCompletableTest {
 
         to.assertEmpty();
 
-        assertTrue(pp.hasObservers());
+        assertTrue(ps.hasObservers());
         assertFalse(cs.hasObservers());
 
-        pp.onNext(1);
+        ps.onNext(1);
 
         assertTrue(cs.hasObservers());
 
         cs.onError(new TestException());
 
-        assertTrue(pp.hasObservers());
+        assertTrue(ps.hasObservers());
 
-        pp.onNext(2);
+        ps.onNext(2);
 
         to.assertEmpty();
 
         cs2.onComplete();
 
-        assertTrue(pp.hasObservers());
+        assertTrue(ps.hasObservers());
 
         to.assertEmpty();
 
-        pp.onComplete();
+        ps.onComplete();
 
         to.assertFailure(TestException.class);
     }
@@ -264,20 +278,20 @@ public class ObservableConcatMapCompletableTest {
         for (int i = 0; i < TestHelper.RACE_LONG_LOOPS; i++) {
             List<Throwable> errors = TestHelper.trackPluginErrors();
             try {
-                final PublishSubject<Integer> pp = PublishSubject.create();
+                final PublishSubject<Integer> ps = PublishSubject.create();
                 final CompletableSubject cs = CompletableSubject.create();
 
-                TestObserver<Void> to = pp.concatMapCompletable(
+                TestObserver<Void> to = ps.concatMapCompletable(
                         Functions.justFunction(cs)
                 )
                 .test();
 
-                pp.onNext(1);
+                ps.onNext(1);
 
                 Runnable r1 = new Runnable() {
                     @Override
                     public void run() {
-                        pp.onError(ex);
+                        ps.onError(ex);
                     }
                 };
 
@@ -310,20 +324,20 @@ public class ObservableConcatMapCompletableTest {
     @Test
     public void disposeInDrainLoop() {
         for (int i = 0; i < TestHelper.RACE_LONG_LOOPS; i++) {
-            final PublishSubject<Integer> pp = PublishSubject.create();
+            final PublishSubject<Integer> ps = PublishSubject.create();
             final CompletableSubject cs = CompletableSubject.create();
 
-            final TestObserver<Void> to = pp.concatMapCompletable(
+            final TestObserver<Void> to = ps.concatMapCompletable(
                     Functions.justFunction(cs)
             )
             .test();
 
-            pp.onNext(1);
+            ps.onNext(1);
 
             Runnable r1 = new Runnable() {
                 @Override
                 public void run() {
-                    pp.onNext(2);
+                    ps.onNext(2);
                 }
             };
 
@@ -343,17 +357,75 @@ public class ObservableConcatMapCompletableTest {
 
     @Test
     public void doneButNotEmpty() {
-        final PublishSubject<Integer> pp = PublishSubject.create();
+        final PublishSubject<Integer> ps = PublishSubject.create();
         final CompletableSubject cs = CompletableSubject.create();
 
-        final TestObserver<Void> to = pp.concatMapCompletable(
+        final TestObserver<Void> to = ps.concatMapCompletable(
                 Functions.justFunction(cs)
         )
         .test();
 
-        pp.onNext(1);
-        pp.onNext(2);
-        pp.onComplete();
+        ps.onNext(1);
+        ps.onNext(2);
+        ps.onComplete();
+
+        cs.onComplete();
+
+        to.assertResult();
+    }
+
+    @Test
+    public void asyncFused() {
+        final PublishSubject<Integer> ps = PublishSubject.create();
+        final CompletableSubject cs = CompletableSubject.create();
+
+        final TestObserver<Void> to = ps.observeOn(ImmediateThinScheduler.INSTANCE)
+        .concatMapCompletable(
+                Functions.justFunction(cs)
+        )
+        .test();
+
+        ps.onNext(1);
+        ps.onComplete();
+
+        cs.onComplete();
+
+        to.assertResult();
+    }
+
+    @Test
+    public void fusionRejected() {
+        final CompletableSubject cs = CompletableSubject.create();
+
+        TestHelper.rejectObservableFusion()
+        .concatMapCompletable(
+                Functions.justFunction(cs)
+        )
+        .test()
+        .assertEmpty();
+    }
+
+    @Test
+    public void emptyScalarSource() {
+        final CompletableSubject cs = CompletableSubject.create();
+
+        Observable.empty()
+        .concatMapCompletable(Functions.justFunction(cs))
+        .test()
+        .assertResult();
+    }
+
+    @Test
+    public void justScalarSource() {
+        final CompletableSubject cs = CompletableSubject.create();
+
+        TestObserver<Void> to = Observable.just(1)
+        .concatMapCompletable(Functions.justFunction(cs))
+        .test();
+
+        to.assertEmpty();
+
+        assertTrue(cs.hasObservers());
 
         cs.onComplete();
 

@@ -261,10 +261,10 @@ public final class FlowablePublishMulticast<T, R> extends AbstractFlowableWithUp
         void remove(MulticastSubscription<T> s) {
             for (;;) {
                 MulticastSubscription<T>[] current = subscribers.get();
-                if (current == TERMINATED || current == EMPTY) {
+                int n = current.length;
+                if (n == 0) {
                     return;
                 }
-                int n = current.length;
                 int j = -1;
 
                 for (int i = 0; i < n; i++) {
@@ -323,9 +323,12 @@ public final class FlowablePublishMulticast<T, R> extends AbstractFlowableWithUp
             int upstreamConsumed = consumed;
             int localLimit = limit;
             boolean canRequest = sourceMode != QueueSubscription.SYNC;
+            AtomicReference<MulticastSubscription<T>[]> subs = subscribers;
 
+            MulticastSubscription<T>[] array = subs.get();
+
+            outer:
             for (;;) {
-                MulticastSubscription<T>[] array = subscribers.get();
 
                 int n = array.length;
 
@@ -333,16 +336,21 @@ public final class FlowablePublishMulticast<T, R> extends AbstractFlowableWithUp
                     long r = Long.MAX_VALUE;
 
                     for (MulticastSubscription<T> ms : array) {
-                        long u = ms.get();
+                        long u = ms.get() - ms.emitted;
                         if (u != Long.MIN_VALUE) {
                             if (r > u) {
                                 r = u;
                             }
+                        } else {
+                            n--;
                         }
                     }
 
-                    long e = 0L;
-                    while (e != r) {
+                    if (n == 0) {
+                        r = 0;
+                    }
+
+                    while (r != 0) {
                         if (isDisposed()) {
                             q.clear();
                             return;
@@ -385,21 +393,35 @@ public final class FlowablePublishMulticast<T, R> extends AbstractFlowableWithUp
                             break;
                         }
 
+                        boolean subscribersChange = false;
+
                         for (MulticastSubscription<T> ms : array) {
-                            if (ms.get() != Long.MIN_VALUE) {
+                            long msr = ms.get();
+                            if (msr != Long.MIN_VALUE) {
+                                if (msr != Long.MAX_VALUE) {
+                                    ms.emitted++;
+                                }
                                 ms.actual.onNext(v);
+                            } else {
+                                subscribersChange = true;
                             }
                         }
 
-                        e++;
+                        r--;
 
                         if (canRequest && ++upstreamConsumed == localLimit) {
                             upstreamConsumed = 0;
                             s.get().request(localLimit);
                         }
+
+                        MulticastSubscription<T>[] freshArray = subs.get();
+                        if (subscribersChange || freshArray != array) {
+                            array = freshArray;
+                            continue outer;
+                        }
                     }
 
-                    if (e == r) {
+                    if (r == 0) {
                         if (isDisposed()) {
                             q.clear();
                             return;
@@ -425,10 +447,6 @@ public final class FlowablePublishMulticast<T, R> extends AbstractFlowableWithUp
                             return;
                         }
                     }
-
-                    for (MulticastSubscription<T> ms : array) {
-                        BackpressureHelper.produced(ms, e);
-                    }
                 }
 
                 consumed = upstreamConsumed;
@@ -439,6 +457,7 @@ public final class FlowablePublishMulticast<T, R> extends AbstractFlowableWithUp
                 if (q == null) {
                     q = queue;
                 }
+                array = subs.get();
             }
         }
 
@@ -465,12 +484,13 @@ public final class FlowablePublishMulticast<T, R> extends AbstractFlowableWithUp
     extends AtomicLong
     implements Subscription {
 
-
         private static final long serialVersionUID = 8664815189257569791L;
 
         final Subscriber<? super T> actual;
 
         final MulticastProcessor<T> parent;
+
+        long emitted;
 
         MulticastSubscription(Subscriber<? super T> actual, MulticastProcessor<T> parent) {
             this.actual = actual;

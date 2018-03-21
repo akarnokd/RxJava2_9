@@ -28,7 +28,6 @@ import org.reactivestreams.*;
 import io.reactivex.*;
 import io.reactivex.Scheduler.Worker;
 import io.reactivex.exceptions.TestException;
-import io.reactivex.internal.subscribers.DeferredScalarSubscriber;
 import io.reactivex.internal.subscriptions.BooleanSubscription;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.processors.PublishProcessor;
@@ -107,13 +106,13 @@ public class DeferredScalarSubscriberTest {
 
     @Test
     public void unsubscribeComposes() {
-        PublishProcessor<Integer> ps = PublishProcessor.create();
+        PublishProcessor<Integer> pp = PublishProcessor.create();
         TestSubscriber<Integer> ts = TestSubscriber.create(0L);
         TestingDeferredScalarSubscriber ds = new TestingDeferredScalarSubscriber(ts);
 
-        ps.subscribe(ds);
+        pp.subscribe(ds);
 
-        assertTrue("No subscribers?", ps.hasSubscribers());
+        assertTrue("No subscribers?", pp.hasSubscribers());
 
         ts.cancel();
 
@@ -126,7 +125,7 @@ public class DeferredScalarSubscriberTest {
         ts.assertNoErrors();
         ts.assertNotComplete();
 
-        assertFalse("Subscribers?", ps.hasSubscribers());
+        assertFalse("Subscribers?", pp.hasSubscribers());
         assertTrue("Deferred not unsubscribed?", ds.isCancelled());
     }
 
@@ -423,5 +422,16 @@ public class DeferredScalarSubscriberTest {
         public void downstreamRequest(long n) {
             request(n);
         }
+    }
+
+    @Test
+    public void doubleOnSubscribe() {
+        TestHelper.doubleOnSubscribe(new DeferredScalarSubscriber<Integer, Integer>(new TestSubscriber<Integer>()) {
+            private static final long serialVersionUID = -4445381578878059054L;
+
+            @Override
+            public void onNext(Integer t) {
+            }
+        });
     }
 }

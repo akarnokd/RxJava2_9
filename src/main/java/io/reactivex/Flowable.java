@@ -5871,8 +5871,9 @@ public abstract class Flowable<T> implements Publisher<T> {
     /**
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher emits connected, non-overlapping buffers, each containing {@code count} items. When the source
-     * Publisher completes or encounters an error, the resulting Publisher emits the current buffer and
-     * propagates the notification from the source Publisher.
+     * Publisher completes, the resulting Publisher emits the current buffer and propagates the notification from the
+     * source Publisher. Note that if the source Publisher issues an onError notification the event is passed on
+     * immediately without first emitting the buffer it is in the process of assembling.
      * <p>
      * <img width="640" height="320" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer3.png" alt="">
      * <dl>
@@ -5900,8 +5901,9 @@ public abstract class Flowable<T> implements Publisher<T> {
     /**
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher emits buffers every {@code skip} items, each containing {@code count} items. When the source
-     * Publisher completes or encounters an error, the resulting Publisher emits the current buffer and
-     * propagates the notification from the source Publisher.
+     * Publisher completes, the resulting Publisher emits the current buffer and propagates the notification from the
+     * source Publisher. Note that if the source Publisher issues an onError notification the event is passed on
+     * immediately without first emitting the buffer it is in the process of assembling.
      * <p>
      * <img width="640" height="320" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer4.png" alt="">
      * <dl>
@@ -5933,8 +5935,9 @@ public abstract class Flowable<T> implements Publisher<T> {
     /**
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher emits buffers every {@code skip} items, each containing {@code count} items. When the source
-     * Publisher completes or encounters an error, the resulting Publisher emits the current buffer and
-     * propagates the notification from the source Publisher.
+     * Publisher completes, the resulting Publisher emits the current buffer and propagates the notification from the
+     * source Publisher. Note that if the source Publisher issues an onError notification the event is passed on
+     * immediately without first emitting the buffer it is in the process of assembling.
      * <p>
      * <img width="640" height="320" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer4.png" alt="">
      * <dl>
@@ -5973,8 +5976,9 @@ public abstract class Flowable<T> implements Publisher<T> {
     /**
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher emits connected, non-overlapping buffers, each containing {@code count} items. When the source
-     * Publisher completes or encounters an error, the resulting Publisher emits the current buffer and
-     * propagates the notification from the source Publisher.
+     * Publisher completes, the resulting Publisher emits the current buffer and propagates the notification from the
+     * source Publisher. Note that if the source Publisher issues an onError notification the event is passed on
+     * immediately without first emitting the buffer it is in the process of assembling.
      * <p>
      * <img width="640" height="320" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer3.png" alt="">
      * <dl>
@@ -6007,8 +6011,9 @@ public abstract class Flowable<T> implements Publisher<T> {
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher starts a new buffer periodically, as determined by the {@code timeskip} argument. It emits
      * each buffer after a fixed timespan, specified by the {@code timespan} argument. When the source
-     * Publisher completes or encounters an error, the resulting Publisher emits the current buffer and
-     * propagates the notification from the source Publisher.
+     * Publisher completes, the resulting Publisher emits the current buffer and propagates the notification from the
+     * source Publisher. Note that if the source Publisher issues an onError notification the event is passed on
+     * immediately without first emitting the buffer it is in the process of assembling.
      * <p>
      * <img width="640" height="320" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer7.png" alt="">
      * <dl>
@@ -6040,8 +6045,10 @@ public abstract class Flowable<T> implements Publisher<T> {
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher starts a new buffer periodically, as determined by the {@code timeskip} argument, and on the
      * specified {@code scheduler}. It emits each buffer after a fixed timespan, specified by the
-     * {@code timespan} argument. When the source Publisher completes or encounters an error, the resulting
-     * Publisher emits the current buffer and propagates the notification from the source Publisher.
+     * {@code timespan} argument. When the source Publisher completes, the resulting Publisher emits the current buffer
+     * and propagates the notification from the source Publisher. Note that if the source Publisher issues an onError
+     * notification the event is passed on immediately without first emitting the buffer it is in the process of
+     * assembling.
      * <p>
      * <img width="640" height="320" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer7.s.png" alt="">
      * <dl>
@@ -6075,8 +6082,10 @@ public abstract class Flowable<T> implements Publisher<T> {
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher starts a new buffer periodically, as determined by the {@code timeskip} argument, and on the
      * specified {@code scheduler}. It emits each buffer after a fixed timespan, specified by the
-     * {@code timespan} argument. When the source Publisher completes or encounters an error, the resulting
-     * Publisher emits the current buffer and propagates the notification from the source Publisher.
+     * {@code timespan} argument. When the source Publisher completes, the resulting Publisher emits the current buffer
+     * and propagates the notification from the source Publisher. Note that if the source Publisher issues an onError
+     * notification the event is passed on immediately without first emitting the buffer it is in the process of
+     * assembling.
      * <p>
      * <img width="640" height="320" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer7.s.png" alt="">
      * <dl>
@@ -6117,8 +6126,10 @@ public abstract class Flowable<T> implements Publisher<T> {
     /**
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher emits connected, non-overlapping buffers, each of a fixed duration specified by the
-     * {@code timespan} argument. When the source Publisher completes or encounters an error, the resulting
-     * Publisher emits the current buffer and propagates the notification from the source Publisher.
+     * {@code timespan} argument. When the source Publisher completes, the resulting Publisher emits the current buffer
+     * and propagates the notification from the source Publisher. Note that if the source Publisher issues an onError
+     * notification the event is passed on immediately without first emitting the buffer it is in the process of
+     * assembling.
      * <p>
      * <img width="640" height="320" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer5.png" alt="">
      * <dl>
@@ -6149,8 +6160,9 @@ public abstract class Flowable<T> implements Publisher<T> {
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher emits connected, non-overlapping buffers, each of a fixed duration specified by the
      * {@code timespan} argument or a maximum size specified by the {@code count} argument (whichever is reached
-     * first). When the source Publisher completes or encounters an error, the resulting Publisher emits the
-     * current buffer and propagates the notification from the source Publisher.
+     * first). When the source Publisher completes, the resulting Publisher emits the current buffer and propagates the
+     * notification from the source Publisher. Note that if the source Publisher issues an onError notification the event
+     * is passed on immediately without first emitting the buffer it is in the process of assembling.
      * <p>
      * <img width="640" height="320" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer6.png" alt="">
      * <dl>
@@ -6184,9 +6196,10 @@ public abstract class Flowable<T> implements Publisher<T> {
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher emits connected, non-overlapping buffers, each of a fixed duration specified by the
      * {@code timespan} argument as measured on the specified {@code scheduler}, or a maximum size specified by
-     * the {@code count} argument (whichever is reached first). When the source Publisher completes or
-     * encounters an error, the resulting Publisher emits the current buffer and propagates the notification
-     * from the source Publisher.
+     * the {@code count} argument (whichever is reached first). When the source Publisher completes, the resulting
+     * Publisher emits the current buffer and propagates the notification from the source Publisher. Note that if the
+     * source Publisher issues an onError notification the event is passed on immediately without first emitting the
+     * buffer it is in the process of assembling.
      * <p>
      * <img width="640" height="320" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer6.s.png" alt="">
      * <dl>
@@ -6222,9 +6235,10 @@ public abstract class Flowable<T> implements Publisher<T> {
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher emits connected, non-overlapping buffers, each of a fixed duration specified by the
      * {@code timespan} argument as measured on the specified {@code scheduler}, or a maximum size specified by
-     * the {@code count} argument (whichever is reached first). When the source Publisher completes or
-     * encounters an error, the resulting Publisher emits the current buffer and propagates the notification
-     * from the source Publisher.
+     * the {@code count} argument (whichever is reached first). When the source Publisher completes, the resulting
+     * Publisher emits the current buffer and propagates the notification from the source Publisher. Note that if the
+     * source Publisher issues an onError notification the event is passed on immediately without first emitting the
+     * buffer it is in the process of assembling.
      * <p>
      * <img width="640" height="320" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer6.s.png" alt="">
      * <dl>
@@ -6273,9 +6287,10 @@ public abstract class Flowable<T> implements Publisher<T> {
     /**
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher emits connected, non-overlapping buffers, each of a fixed duration specified by the
-     * {@code timespan} argument and on the specified {@code scheduler}. When the source Publisher completes or
-     * encounters an error, the resulting Publisher emits the current buffer and propagates the notification
-     * from the source Publisher.
+     * {@code timespan} argument and on the specified {@code scheduler}. When the source Publisher completes, the
+     * resulting Publisher emits the current buffer and propagates the notification from the source Publisher. Note that
+     * if the source Publisher issues an onError notification the event is passed on immediately without first emitting
+     * the buffer it is in the process of assembling.
      * <p>
      * <img width="640" height="320" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer5.s.png" alt="">
      * <dl>
@@ -6307,7 +6322,9 @@ public abstract class Flowable<T> implements Publisher<T> {
     /**
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher emits buffers that it creates when the specified {@code openingIndicator} Publisher emits an
-     * item, and closes when the Publisher returned from {@code closingIndicator} emits an item.
+     * item, and closes when the Publisher returned from {@code closingIndicator} emits an item. If any of the source
+     * Publisher, {@code openingIndicator} or {@code closingIndicator} issues an onError notification the event is passed
+     * on immediately without first emitting the buffer it is in the process of assembling.
      * <p>
      * <img width="640" height="470" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer2.png" alt="">
      * <dl>
@@ -6341,7 +6358,9 @@ public abstract class Flowable<T> implements Publisher<T> {
     /**
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher emits buffers that it creates when the specified {@code openingIndicator} Publisher emits an
-     * item, and closes when the Publisher returned from {@code closingIndicator} emits an item.
+     * item, and closes when the Publisher returned from {@code closingIndicator} emits an item. If any of the source
+     * Publisher, {@code openingIndicator} or {@code closingIndicator} issues an onError notification the event is passed
+     * on immediately without first emitting the buffer it is in the process of assembling.
      * <p>
      * <img width="640" height="470" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer2.png" alt="">
      * <dl>
@@ -6387,7 +6406,8 @@ public abstract class Flowable<T> implements Publisher<T> {
      * <img width="640" height="395" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer8.png" alt="">
      * <p>
      * Completion of either the source or the boundary Publisher causes the returned Publisher to emit the
-     * latest buffer and complete.
+     * latest buffer and complete. If either the source Publisher or the boundary Publisher issues an onError notification
+     * the event is passed on immediately without first emitting the buffer it is in the process of assembling.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>This operator does not support backpressure as it is instead controlled by the {@code Publisher}
@@ -6420,7 +6440,8 @@ public abstract class Flowable<T> implements Publisher<T> {
      * <img width="640" height="395" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer8.png" alt="">
      * <p>
      * Completion of either the source or the boundary Publisher causes the returned Publisher to emit the
-     * latest buffer and complete.
+     * latest buffer and complete. If either the source Publisher or the boundary Publisher issues an onError notification
+     * the event is passed on immediately without first emitting the buffer it is in the process of assembling.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>This operator does not support backpressure as it is instead controlled by the {@code Publisher}
@@ -6456,7 +6477,8 @@ public abstract class Flowable<T> implements Publisher<T> {
      * <img width="640" height="395" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer8.png" alt="">
      * <p>
      * Completion of either the source or the boundary Publisher causes the returned Publisher to emit the
-     * latest buffer and complete.
+     * latest buffer and complete. If either the source Publisher or the boundary Publisher issues an onError notification
+     * the event is passed on immediately without first emitting the buffer it is in the process of assembling.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>This operator does not support backpressure as it is instead controlled by the {@code Publisher}
@@ -6491,9 +6513,12 @@ public abstract class Flowable<T> implements Publisher<T> {
     /**
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher emits connected, non-overlapping buffers. It emits the current buffer and replaces it with a
-     * new buffer whenever the Publisher produced by the specified {@code closingIndicator} emits an item.
+     * new buffer whenever the Publisher produced by the specified {@code boundaryIndicatorSupplier} emits an item.
      * <p>
      * <img width="640" height="395" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer1.png" alt="">
+     * <p>
+     * If either the source {@code Publisher} or the boundary {@code Publisher} issues an {@code onError} notification the event is passed on
+     * immediately without first emitting the buffer it is in the process of assembling.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>This operator does not support backpressure as it is instead controlled by the given Publishers and
@@ -6505,7 +6530,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      * @param <B> the value type of the boundary-providing Publisher
      * @param boundaryIndicatorSupplier
      *            a {@link Callable} that produces a Publisher that governs the boundary between buffers.
-     *            Whenever the source {@code Publisher} emits an item, {@code buffer} emits the current buffer and
+     *            Whenever the supplied {@code Publisher} emits an item, {@code buffer} emits the current buffer and
      *            begins to fill a new one
      * @return a Flowable that emits a connected, non-overlapping buffer of items from the source Publisher
      *         each time the Publisher created with the {@code closingIndicator} argument emits an item
@@ -6516,15 +6541,17 @@ public abstract class Flowable<T> implements Publisher<T> {
     @SchedulerSupport(SchedulerSupport.NONE)
     public final <B> Flowable<List<T>> buffer(Callable<? extends Publisher<B>> boundaryIndicatorSupplier) {
         return buffer(boundaryIndicatorSupplier, ArrayListSupplier.<T>asCallable());
-
     }
 
     /**
      * Returns a Flowable that emits buffers of items it collects from the source Publisher. The resulting
      * Publisher emits connected, non-overlapping buffers. It emits the current buffer and replaces it with a
-     * new buffer whenever the Publisher produced by the specified {@code closingIndicator} emits an item.
+     * new buffer whenever the Publisher produced by the specified {@code boundaryIndicatorSupplier} emits an item.
      * <p>
      * <img width="640" height="395" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/buffer1.png" alt="">
+     * <p>
+     * If either the source {@code Publisher} or the boundary {@code Publisher} issues an {@code onError} notification the event is passed on
+     * immediately without first emitting the buffer it is in the process of assembling.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>This operator does not support backpressure as it is instead controlled by the given Publishers and
@@ -6537,7 +6564,7 @@ public abstract class Flowable<T> implements Publisher<T> {
      * @param <B> the value type of the boundary-providing Publisher
      * @param boundaryIndicatorSupplier
      *            a {@link Callable} that produces a Publisher that governs the boundary between buffers.
-     *            Whenever the source {@code Publisher} emits an item, {@code buffer} emits the current buffer and
+     *            Whenever the supplied {@code Publisher} emits an item, {@code buffer} emits the current buffer and
      *            begins to fill a new one
      * @param bufferSupplier
      *            a factory function that returns an instance of the collection subclass to be used and returned
@@ -8250,6 +8277,25 @@ public abstract class Flowable<T> implements Publisher<T> {
      * represent.
      * <p>
      * <img width="640" height="335" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/dematerialize.png" alt="">
+     * <p>
+     * When the upstream signals an {@link Notification#createOnError(Throwable) onError} or
+     * {@link Notification#createOnComplete() onComplete} item, the
+     * returned Flowable cancels the flow and terminates with that type of terminal event:
+     * <pre><code>
+     * Flowable.just(createOnNext(1), createOnComplete(), createOnNext(2))
+     * .doOnCancel(() -&gt; System.out.println("Cancelled!"));
+     * .test()
+     * .assertResult(1);
+     * </code></pre>
+     * If the upstream signals {@code onError} or {@code onComplete} directly, the flow is terminated
+     * with the same event.
+     * <pre><code>
+     * Flowable.just(createOnNext(1), createOnNext(2))
+     * .test()
+     * .assertResult(1, 2);
+     * </code></pre>
+     * If this behavior is not desired, the completion can be suppressed by applying {@link #concatWith(Publisher)}
+     * with a {@link #never()} source.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator doesn't interfere with backpressure which is determined by the source {@code Publisher}'s

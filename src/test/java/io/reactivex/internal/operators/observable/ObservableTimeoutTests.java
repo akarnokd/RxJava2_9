@@ -50,24 +50,24 @@ public class ObservableTimeoutTests {
     @Test
     public void shouldNotTimeoutIfOnNextWithinTimeout() {
         Observer<String> observer = TestHelper.mockObserver();
-        TestObserver<String> ts = new TestObserver<String>(observer);
+        TestObserver<String> to = new TestObserver<String>(observer);
 
-        withTimeout.subscribe(ts);
+        withTimeout.subscribe(to);
 
         testScheduler.advanceTimeBy(2, TimeUnit.SECONDS);
         underlyingSubject.onNext("One");
         verify(observer).onNext("One");
         testScheduler.advanceTimeBy(2, TimeUnit.SECONDS);
         verify(observer, never()).onError(any(Throwable.class));
-        ts.dispose();
+        to.dispose();
     }
 
     @Test
     public void shouldNotTimeoutIfSecondOnNextWithinTimeout() {
         Observer<String> observer = TestHelper.mockObserver();
-        TestObserver<String> ts = new TestObserver<String>(observer);
+        TestObserver<String> to = new TestObserver<String>(observer);
 
-        withTimeout.subscribe(ts);
+        withTimeout.subscribe(to);
 
         testScheduler.advanceTimeBy(2, TimeUnit.SECONDS);
         underlyingSubject.onNext("One");
@@ -76,57 +76,57 @@ public class ObservableTimeoutTests {
         verify(observer).onNext("Two");
         testScheduler.advanceTimeBy(2, TimeUnit.SECONDS);
         verify(observer, never()).onError(any(Throwable.class));
-        ts.dispose();
+        to.dispose();
     }
 
     @Test
     public void shouldTimeoutIfOnNextNotWithinTimeout() {
         Observer<String> observer = TestHelper.mockObserver();
-        TestObserver<String> ts = new TestObserver<String>(observer);
+        TestObserver<String> to = new TestObserver<String>(observer);
 
-        withTimeout.subscribe(ts);
+        withTimeout.subscribe(to);
 
         testScheduler.advanceTimeBy(TIMEOUT + 1, TimeUnit.SECONDS);
         verify(observer).onError(any(TimeoutException.class));
-        ts.dispose();
+        to.dispose();
     }
 
     @Test
     public void shouldTimeoutIfSecondOnNextNotWithinTimeout() {
         Observer<String> observer = TestHelper.mockObserver();
-        TestObserver<String> ts = new TestObserver<String>(observer);
+        TestObserver<String> to = new TestObserver<String>(observer);
         withTimeout.subscribe(observer);
         testScheduler.advanceTimeBy(2, TimeUnit.SECONDS);
         underlyingSubject.onNext("One");
         verify(observer).onNext("One");
         testScheduler.advanceTimeBy(TIMEOUT + 1, TimeUnit.SECONDS);
         verify(observer).onError(any(TimeoutException.class));
-        ts.dispose();
+        to.dispose();
     }
 
     @Test
     public void shouldCompleteIfUnderlyingComletes() {
         Observer<String> observer = TestHelper.mockObserver();
-        TestObserver<String> ts = new TestObserver<String>(observer);
+        TestObserver<String> to = new TestObserver<String>(observer);
         withTimeout.subscribe(observer);
         testScheduler.advanceTimeBy(2, TimeUnit.SECONDS);
         underlyingSubject.onComplete();
         testScheduler.advanceTimeBy(2, TimeUnit.SECONDS);
         verify(observer).onComplete();
         verify(observer, never()).onError(any(Throwable.class));
-        ts.dispose();
+        to.dispose();
     }
 
     @Test
     public void shouldErrorIfUnderlyingErrors() {
         Observer<String> observer = TestHelper.mockObserver();
-        TestObserver<String> ts = new TestObserver<String>(observer);
+        TestObserver<String> to = new TestObserver<String>(observer);
         withTimeout.subscribe(observer);
         testScheduler.advanceTimeBy(2, TimeUnit.SECONDS);
         underlyingSubject.onError(new UnsupportedOperationException());
         testScheduler.advanceTimeBy(2, TimeUnit.SECONDS);
         verify(observer).onError(any(UnsupportedOperationException.class));
-        ts.dispose();
+        to.dispose();
     }
 
     @Test
@@ -135,8 +135,8 @@ public class ObservableTimeoutTests {
         Observable<String> source = underlyingSubject.timeout(TIMEOUT, TIME_UNIT, testScheduler, other);
 
         Observer<String> observer = TestHelper.mockObserver();
-        TestObserver<String> ts = new TestObserver<String>(observer);
-        source.subscribe(ts);
+        TestObserver<String> to = new TestObserver<String>(observer);
+        source.subscribe(to);
 
         testScheduler.advanceTimeBy(2, TimeUnit.SECONDS);
         underlyingSubject.onNext("One");
@@ -149,7 +149,7 @@ public class ObservableTimeoutTests {
         inOrder.verify(observer, times(1)).onNext("c");
         inOrder.verify(observer, times(1)).onComplete();
         inOrder.verifyNoMoreInteractions();
-        ts.dispose();
+        to.dispose();
     }
 
     @Test
@@ -158,8 +158,8 @@ public class ObservableTimeoutTests {
         Observable<String> source = underlyingSubject.timeout(TIMEOUT, TIME_UNIT, testScheduler, other);
 
         Observer<String> observer = TestHelper.mockObserver();
-        TestObserver<String> ts = new TestObserver<String>(observer);
-        source.subscribe(ts);
+        TestObserver<String> to = new TestObserver<String>(observer);
+        source.subscribe(to);
 
         testScheduler.advanceTimeBy(2, TimeUnit.SECONDS);
         underlyingSubject.onNext("One");
@@ -172,7 +172,7 @@ public class ObservableTimeoutTests {
         inOrder.verify(observer, times(1)).onNext("c");
         inOrder.verify(observer, times(1)).onComplete();
         inOrder.verifyNoMoreInteractions();
-        ts.dispose();
+        to.dispose();
     }
 
     @Test
@@ -181,8 +181,8 @@ public class ObservableTimeoutTests {
         Observable<String> source = underlyingSubject.timeout(TIMEOUT, TIME_UNIT, testScheduler, other);
 
         Observer<String> observer = TestHelper.mockObserver();
-        TestObserver<String> ts = new TestObserver<String>(observer);
-        source.subscribe(ts);
+        TestObserver<String> to = new TestObserver<String>(observer);
+        source.subscribe(to);
 
         testScheduler.advanceTimeBy(2, TimeUnit.SECONDS);
         underlyingSubject.onNext("One");
@@ -195,7 +195,7 @@ public class ObservableTimeoutTests {
         inOrder.verify(observer, times(1)).onNext("c");
         inOrder.verify(observer, times(1)).onComplete();
         inOrder.verifyNoMoreInteractions();
-        ts.dispose();
+        to.dispose();
     }
 
     @Test
@@ -204,8 +204,8 @@ public class ObservableTimeoutTests {
         Observable<String> source = underlyingSubject.timeout(TIMEOUT, TIME_UNIT, testScheduler, other);
 
         Observer<String> observer = TestHelper.mockObserver();
-        TestObserver<String> ts = new TestObserver<String>(observer);
-        source.subscribe(ts);
+        TestObserver<String> to = new TestObserver<String>(observer);
+        source.subscribe(to);
 
         testScheduler.advanceTimeBy(2, TimeUnit.SECONDS);
         underlyingSubject.onNext("One");
@@ -214,7 +214,7 @@ public class ObservableTimeoutTests {
 
         other.onNext("a");
         other.onNext("b");
-        ts.dispose();
+        to.dispose();
 
         // The following messages should not be delivered.
         other.onNext("c");
@@ -235,7 +235,7 @@ public class ObservableTimeoutTests {
         final CountDownLatch timeoutSetuped = new CountDownLatch(1);
 
         final Observer<String> observer = TestHelper.mockObserver();
-        final TestObserver<String> ts = new TestObserver<String>(observer);
+        final TestObserver<String> to = new TestObserver<String>(observer);
 
         new Thread(new Runnable() {
 
@@ -257,7 +257,7 @@ public class ObservableTimeoutTests {
                     }
 
                 }).timeout(1, TimeUnit.SECONDS, testScheduler)
-                        .subscribe(ts);
+                        .subscribe(to);
             }
         }).start();
 
@@ -287,8 +287,8 @@ public class ObservableTimeoutTests {
         Observable<String> observableWithTimeout = never.timeout(1000, TimeUnit.MILLISECONDS, testScheduler);
 
         Observer<String> observer = TestHelper.mockObserver();
-        TestObserver<String> ts = new TestObserver<String>(observer);
-        observableWithTimeout.subscribe(ts);
+        TestObserver<String> to = new TestObserver<String>(observer);
+        observableWithTimeout.subscribe(to);
 
         testScheduler.advanceTimeBy(2000, TimeUnit.MILLISECONDS);
 
@@ -318,8 +318,8 @@ public class ObservableTimeoutTests {
                 testScheduler);
 
         Observer<String> observer = TestHelper.mockObserver();
-        TestObserver<String> ts = new TestObserver<String>(observer);
-        observableWithTimeout.subscribe(ts);
+        TestObserver<String> to = new TestObserver<String>(observer);
+        observableWithTimeout.subscribe(to);
 
         testScheduler.advanceTimeBy(2000, TimeUnit.MILLISECONDS);
 
@@ -349,8 +349,8 @@ public class ObservableTimeoutTests {
                 testScheduler);
 
         Observer<String> observer = TestHelper.mockObserver();
-        TestObserver<String> ts = new TestObserver<String>(observer);
-        observableWithTimeout.subscribe(ts);
+        TestObserver<String> to = new TestObserver<String>(observer);
+        observableWithTimeout.subscribe(to);
 
         testScheduler.advanceTimeBy(2000, TimeUnit.MILLISECONDS);
 
@@ -422,12 +422,6 @@ public class ObservableTimeoutTests {
         .timeout(1, TimeUnit.DAYS)
         .test()
         .assertResult();
-    }
-
-    @Test
-    public void newTimer() {
-        ObservableTimeoutTimed.NEW_TIMER.dispose();
-        assertTrue(ObservableTimeoutTimed.NEW_TIMER.isDisposed());
     }
 
     @Test
@@ -514,5 +508,90 @@ public class ObservableTimeoutTests {
         assertFalse(ps.hasObservers());
 
         to.assertResult(1);
+    }
+
+    @Test
+    public void fallbackErrors() {
+        Observable.never()
+        .timeout(1, TimeUnit.MILLISECONDS, Observable.error(new TestException()))
+        .test()
+        .awaitDone(5, TimeUnit.SECONDS)
+        .assertFailure(TestException.class);
+    }
+
+    @Test
+    public void onNextOnTimeoutRace() {
+        for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
+            final TestScheduler sch = new TestScheduler();
+
+            final PublishSubject<Integer> ps = PublishSubject.create();
+
+            TestObserver<Integer> to = ps.timeout(1, TimeUnit.SECONDS, sch).test();
+
+            Runnable r1 = new Runnable() {
+                @Override
+                public void run() {
+                    ps.onNext(1);
+                }
+            };
+
+            Runnable r2 = new Runnable() {
+                @Override
+                public void run() {
+                    sch.advanceTimeBy(1, TimeUnit.SECONDS);
+                }
+            };
+
+            TestHelper.race(r1, r2);
+
+            if (to.valueCount() != 0) {
+                if (to.errorCount() != 0) {
+                    to.assertFailure(TimeoutException.class, 1);
+                } else {
+                    to.assertValuesOnly(1);
+                }
+            } else {
+                to.assertFailure(TimeoutException.class);
+            }
+        }
+    }
+
+    @Test
+    public void onNextOnTimeoutRaceFallback() {
+        for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
+            final TestScheduler sch = new TestScheduler();
+
+            final PublishSubject<Integer> ps = PublishSubject.create();
+
+            TestObserver<Integer> to = ps.timeout(1, TimeUnit.SECONDS, sch, Observable.just(2)).test();
+
+            Runnable r1 = new Runnable() {
+                @Override
+                public void run() {
+                    ps.onNext(1);
+                }
+            };
+
+            Runnable r2 = new Runnable() {
+                @Override
+                public void run() {
+                    sch.advanceTimeBy(1, TimeUnit.SECONDS);
+                }
+            };
+
+            TestHelper.race(r1, r2);
+
+            if (to.isTerminated()) {
+                int c = to.valueCount();
+                if (c == 1) {
+                    int v = to.values().get(0);
+                    assertTrue("" + v, v == 1 || v == 2);
+                } else {
+                    to.assertResult(1, 2);
+                }
+            } else {
+                to.assertValuesOnly(1);
+            }
+        }
     }
 }

@@ -78,7 +78,7 @@ public class FlowableMergeTest {
         final Flowable<String> o1 = Flowable.unsafeCreate(new TestSynchronousFlowable());
         final Flowable<String> o2 = Flowable.unsafeCreate(new TestSynchronousFlowable());
 
-        Flowable<Flowable<String>> FlowableOfFlowables = Flowable.unsafeCreate(new Publisher<Flowable<String>>() {
+        Flowable<Flowable<String>> flowableOfFlowables = Flowable.unsafeCreate(new Publisher<Flowable<String>>() {
 
             @Override
             public void subscribe(Subscriber<? super Flowable<String>> observer) {
@@ -90,7 +90,7 @@ public class FlowableMergeTest {
             }
 
         });
-        Flowable<String> m = Flowable.merge(FlowableOfFlowables);
+        Flowable<String> m = Flowable.merge(flowableOfFlowables);
         m.subscribe(stringObserver);
 
         verify(stringObserver, never()).onError(any(Throwable.class));
@@ -1494,22 +1494,22 @@ public class FlowableMergeTest {
     public void mergeArrayMaxConcurrent() {
         TestSubscriber<Integer> ts = TestSubscriber.create();
 
-        PublishProcessor<Integer> ps1 = PublishProcessor.create();
-        PublishProcessor<Integer> ps2 = PublishProcessor.create();
+        PublishProcessor<Integer> pp1 = PublishProcessor.create();
+        PublishProcessor<Integer> pp2 = PublishProcessor.create();
 
-        Flowable.mergeArray(1, 128, new Flowable[] { ps1, ps2 }).subscribe(ts);
+        Flowable.mergeArray(1, 128, new Flowable[] { pp1, pp2 }).subscribe(ts);
 
-        assertTrue("ps1 has no subscribers?!", ps1.hasSubscribers());
-        assertFalse("ps2 has subscribers?!", ps2.hasSubscribers());
+        assertTrue("ps1 has no subscribers?!", pp1.hasSubscribers());
+        assertFalse("ps2 has subscribers?!", pp2.hasSubscribers());
 
-        ps1.onNext(1);
-        ps1.onComplete();
+        pp1.onNext(1);
+        pp1.onComplete();
 
-        assertFalse("ps1 has subscribers?!", ps1.hasSubscribers());
-        assertTrue("ps2 has no subscribers?!", ps2.hasSubscribers());
+        assertFalse("ps1 has subscribers?!", pp1.hasSubscribers());
+        assertTrue("ps2 has no subscribers?!", pp2.hasSubscribers());
 
-        ps2.onNext(2);
-        ps2.onComplete();
+        pp2.onNext(2);
+        pp2.onComplete();
 
         ts.assertValues(1, 2);
         ts.assertNoErrors();
@@ -1571,15 +1571,15 @@ public class FlowableMergeTest {
                 new FlowableFlatMap.MergeSubscriber<Publisher<Integer>, Integer>(ts, Functions.<Publisher<Integer>>identity(), false, 128, 128);
         ms.onSubscribe(new BooleanSubscription());
 
-        PublishProcessor<Integer> ps = PublishProcessor.create();
+        PublishProcessor<Integer> pp = PublishProcessor.create();
 
-        ms.onNext(ps);
+        ms.onNext(pp);
 
-        ps.onNext(1);
+        pp.onNext(1);
 
         BackpressureHelper.add(ms.requested, 2);
 
-        ps.onNext(2);
+        pp.onNext(2);
 
         ms.drain();
 

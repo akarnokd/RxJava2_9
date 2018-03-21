@@ -18,11 +18,11 @@ import java.util.concurrent.atomic.*;
 import io.reactivex.*;
 import io.reactivex.annotations.Experimental;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.exceptions.*;
+import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.disposables.DisposableHelper;
 import io.reactivex.internal.functions.ObjectHelper;
-import io.reactivex.internal.fuseable.SimplePlainQueue;
+import io.reactivex.internal.fuseable.*;
 import io.reactivex.internal.queue.SpscLinkedArrayQueue;
 import io.reactivex.internal.util.*;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -56,7 +56,9 @@ public final class ObservableConcatMapCompletable<T> extends Completable {
 
     @Override
     protected void subscribeActual(CompletableObserver s) {
-        source.subscribe(new ConcatMapCompletableObserver<T>(s, mapper, errorMode, prefetch));
+        if (!ScalarXMapZHelper.tryAsCompletable(source, mapper, s)) {
+            source.subscribe(new ConcatMapCompletableObserver<T>(s, mapper, errorMode, prefetch));
+        }
     }
 
     static final class ConcatMapCompletableObserver<T>
@@ -77,7 +79,7 @@ public final class ObservableConcatMapCompletable<T> extends Completable {
 
         final int prefetch;
 
-        final SimplePlainQueue<T> queue;
+        SimpleQueue<T> queue;
 
         Disposable upstream;
 
@@ -96,20 +98,40 @@ public final class ObservableConcatMapCompletable<T> extends Completable {
             this.prefetch = prefetch;
             this.errors = new AtomicThrowable();
             this.inner = new ConcatMapInnerObserver(this);
-            this.queue = new SpscLinkedArrayQueue<T>(prefetch);
         }
 
         @Override
         public void onSubscribe(Disposable s) {
             if (DisposableHelper.validate(upstream, s)) {
                 this.upstream = s;
+                if (s instanceof QueueDisposable) {
+                    @SuppressWarnings("unchecked")
+                    QueueDisposable<T> qd = (QueueDisposable<T>) s;
+
+                    int m = qd.requestFusion(QueueDisposable.ANY);
+                    if (m == QueueDisposable.SYNC) {
+                        queue = qd;
+                        done = true;
+                        downstream.onSubscribe(this);
+                        drain();
+                        return;
+                    }
+                    if (m == QueueDisposable.ASYNC) {
+                        queue = qd;
+                        downstream.onSubscribe(this);
+                        return;
+                    }
+                }
+                queue = new SpscLinkedArrayQueue<T>(prefetch);
                 downstream.onSubscribe(this);
             }
         }
 
         @Override
         public void onNext(T t) {
-            queue.offer(t);
+            if (t != null) {
+                queue.offer(t);
+            }
             drain();
         }
 
@@ -187,6 +209,9 @@ public final class ObservableConcatMapCompletable<T> extends Completable {
                 return;
             }
 
+            AtomicThrowable errors = this.errors;
+            ErrorMode errorMode = this.errorMode;
+
             do {
                 if (disposed) {
                     queue.clear();
@@ -206,8 +231,24 @@ public final class ObservableConcatMapCompletable<T> extends Completable {
                     }
 
                     boolean d = done;
-                    T v = queue.poll();
-                    boolean empty = v == null;
+                    boolean empty = true;
+                    CompletableSource cs = null;
+                    try {
+                        T v = queue.poll();
+                        if (v != null) {
+                            cs = ObjectHelper.requireNonNull(mapper.apply(v), "The mapper returned a null CompletableSource");
+                            empty = false;
+                        }
+                    } catch (Throwable ex) {
+                        Exceptions.throwIfFatal(ex);
+                        disposed = true;
+                        queue.clear();
+                        upstream.dispose();
+                        errors.addThrowable(ex);
+                        ex = errors.terminate();
+                        downstream.onError(ex);
+                        return;
+                    }
 
                     if (d && empty) {
                         disposed = true;
@@ -221,21 +262,6 @@ public final class ObservableConcatMapCompletable<T> extends Completable {
                     }
 
                     if (!empty) {
-
-                        CompletableSource cs;
-
-                        try {
-                            cs = ObjectHelper.requireNonNull(mapper.apply(v), "The mapper returned a null CompletableSource");
-                        } catch (Throwable ex) {
-                            Exceptions.throwIfFatal(ex);
-                            disposed = true;
-                            queue.clear();
-                            upstream.dispose();
-                            errors.addThrowable(ex);
-                            ex = errors.terminate();
-                            downstream.onError(ex);
-                            return;
-                        }
                         active = true;
                         cs.subscribe(inner);
                     }

@@ -23,7 +23,7 @@ import io.reactivex.Observable;
 import io.reactivex.TestHelper;
 import io.reactivex.disposables.*;
 import io.reactivex.exceptions.TestException;
-import io.reactivex.observers.TestObserver;
+import io.reactivex.observers.*;
 import io.reactivex.plugins.RxJavaPlugins;
 
 public class SerializedSubjectTest {
@@ -31,12 +31,12 @@ public class SerializedSubjectTest {
     @Test
     public void testBasic() {
         SerializedSubject<String> subject = new SerializedSubject<String>(PublishSubject.<String> create());
-        TestObserver<String> ts = new TestObserver<String>();
-        subject.subscribe(ts);
+        TestObserver<String> to = new TestObserver<String>();
+        subject.subscribe(to);
         subject.onNext("hello");
         subject.onComplete();
-        ts.awaitTerminalEvent();
-        ts.assertValue("hello");
+        to.awaitTerminalEvent();
+        to.assertValue("hello");
     }
 
     @Test
@@ -405,11 +405,11 @@ public class SerializedSubjectTest {
     public void normal() {
         Subject<Integer> s = PublishSubject.<Integer>create().toSerialized();
 
-        TestObserver<Integer> ts = s.test();
+        TestObserver<Integer> to = s.test();
 
         Observable.range(1, 10).subscribe(s);
 
-        ts.assertResult(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        to.assertResult(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
         assertFalse(s.hasObservers());
 
@@ -435,7 +435,7 @@ public class SerializedSubjectTest {
         for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
             final Subject<Integer> s = PublishSubject.<Integer>create().toSerialized();
 
-            TestObserver<Integer> ts = s.test();
+            TestObserver<Integer> to = s.test();
 
             Runnable r1 = new Runnable() {
                 @Override
@@ -453,7 +453,7 @@ public class SerializedSubjectTest {
 
             TestHelper.race(r1, r2);
 
-            ts.assertSubscribed().assertNoErrors().assertNotComplete()
+            to.assertSubscribed().assertNoErrors().assertNotComplete()
             .assertValueSet(Arrays.asList(1, 2));
         }
     }
@@ -463,7 +463,7 @@ public class SerializedSubjectTest {
         for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
             final Subject<Integer> s = PublishSubject.<Integer>create().toSerialized();
 
-            TestObserver<Integer> ts = s.test();
+            TestObserver<Integer> to = s.test();
 
             final TestException ex = new TestException();
 
@@ -483,10 +483,10 @@ public class SerializedSubjectTest {
 
             TestHelper.race(r1, r2);
 
-            ts.assertError(ex).assertNotComplete();
+            to.assertError(ex).assertNotComplete();
 
-            if (ts.valueCount() != 0) {
-                ts.assertValue(1);
+            if (to.valueCount() != 0) {
+                to.assertValue(1);
             }
         }
     }
@@ -496,7 +496,7 @@ public class SerializedSubjectTest {
         for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
             final Subject<Integer> s = PublishSubject.<Integer>create().toSerialized();
 
-            TestObserver<Integer> ts = s.test();
+            TestObserver<Integer> to = s.test();
 
             Runnable r1 = new Runnable() {
                 @Override
@@ -514,10 +514,10 @@ public class SerializedSubjectTest {
 
             TestHelper.race(r1, r2);
 
-            ts.assertComplete().assertNoErrors();
+            to.assertComplete().assertNoErrors();
 
-            if (ts.valueCount() != 0) {
-                ts.assertValue(1);
+            if (to.valueCount() != 0) {
+                to.assertValue(1);
             }
         }
     }
@@ -527,7 +527,7 @@ public class SerializedSubjectTest {
         for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
             final Subject<Integer> s = PublishSubject.<Integer>create().toSerialized();
 
-            TestObserver<Integer> ts = s.test();
+            TestObserver<Integer> to = s.test();
 
             final Disposable bs = Disposables.empty();
 
@@ -547,7 +547,7 @@ public class SerializedSubjectTest {
 
             TestHelper.race(r1, r2);
 
-            ts.assertValue(1).assertNotComplete().assertNoErrors();
+            to.assertValue(1).assertNotComplete().assertNoErrors();
         }
     }
 
@@ -556,7 +556,7 @@ public class SerializedSubjectTest {
         for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
             final Subject<Integer> s = PublishSubject.<Integer>create().toSerialized();
 
-            TestObserver<Integer> ts = s.test();
+            TestObserver<Integer> to = s.test();
 
             final Disposable bs = Disposables.empty();
 
@@ -576,7 +576,7 @@ public class SerializedSubjectTest {
 
             TestHelper.race(r1, r2);
 
-            ts.assertResult();
+            to.assertResult();
         }
     }
 
@@ -585,7 +585,7 @@ public class SerializedSubjectTest {
         for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
             final Subject<Integer> s = PublishSubject.<Integer>create().toSerialized();
 
-            TestObserver<Integer> ts = s.test();
+            TestObserver<Integer> to = s.test();
 
             Runnable r1 = new Runnable() {
                 @Override
@@ -603,7 +603,7 @@ public class SerializedSubjectTest {
 
             TestHelper.race(r1, r2);
 
-            ts.assertResult();
+            to.assertResult();
         }
     }
 
@@ -612,7 +612,7 @@ public class SerializedSubjectTest {
         for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
             final Subject<Integer> s = PublishSubject.<Integer>create().toSerialized();
 
-            TestObserver<Integer> ts = s.test();
+            TestObserver<Integer> to = s.test();
 
             final TestException ex = new TestException();
 
@@ -634,7 +634,7 @@ public class SerializedSubjectTest {
 
                 TestHelper.race(r1, r2);
 
-                ts.assertFailure(TestException.class);
+                to.assertFailure(TestException.class);
 
                 TestHelper.assertUndeliverable(errors, 0, TestException.class);
             } finally {
@@ -648,7 +648,7 @@ public class SerializedSubjectTest {
         for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
             final Subject<Integer> s = PublishSubject.<Integer>create().toSerialized();
 
-            TestObserver<Integer> ts = s.test();
+            TestObserver<Integer> to = s.test();
 
             final Disposable bs1 = Disposables.empty();
             final Disposable bs2 = Disposables.empty();
@@ -669,7 +669,7 @@ public class SerializedSubjectTest {
 
             TestHelper.race(r1, r2);
 
-            ts.assertEmpty();
+            to.assertEmpty();
         }
     }
 }

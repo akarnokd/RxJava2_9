@@ -26,6 +26,7 @@ import io.reactivex.exceptions.TestException;
 import io.reactivex.functions.*;
 import io.reactivex.internal.functions.Functions;
 import io.reactivex.internal.subscriptions.BooleanSubscription;
+import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.processors.*;
 import io.reactivex.schedulers.TestScheduler;
 import io.reactivex.subscribers.*;
@@ -268,7 +269,7 @@ public class FlowableWindowWithStartEndFlowableTest {
     public void reentrant() {
         final FlowableProcessor<Integer> ps = PublishProcessor.<Integer>create();
 
-        TestSubscriber<Integer> to = new TestSubscriber<Integer>() {
+        TestSubscriber<Integer> ts = new TestSubscriber<Integer>() {
             @Override
             public void onNext(Integer t) {
                 super.onNext(t);
@@ -286,11 +287,11 @@ public class FlowableWindowWithStartEndFlowableTest {
                 return v;
             }
         })
-        .subscribe(to);
+        .subscribe(ts);
 
         ps.onNext(1);
 
-        to
+        ts
         .awaitDone(1, TimeUnit.SECONDS)
         .assertResult(1, 2);
     }
@@ -311,7 +312,7 @@ public class FlowableWindowWithStartEndFlowableTest {
         PublishProcessor<Integer> start = PublishProcessor.create();
         final PublishProcessor<Integer> end = PublishProcessor.create();
 
-        TestSubscriber<Integer> to = source.window(start, new Function<Integer, Flowable<Integer>>() {
+        TestSubscriber<Integer> ts = source.window(start, new Function<Integer, Flowable<Integer>>() {
             @Override
             public Flowable<Integer> apply(Integer v) throws Exception {
                 return end;
@@ -338,7 +339,7 @@ public class FlowableWindowWithStartEndFlowableTest {
 
         TestHelper.emit(source, 7, 8);
 
-        to.assertResult(1, 2, 3, 4, 5, 5, 6, 6, 7, 8);
+        ts.assertResult(1, 2, 3, 4, 5, 5, 6, 6, 7, 8);
     }
 
     @Test
@@ -347,7 +348,7 @@ public class FlowableWindowWithStartEndFlowableTest {
         PublishProcessor<Integer> start = PublishProcessor.create();
         final PublishProcessor<Integer> end = PublishProcessor.create();
 
-        TestSubscriber<Integer> to = source.window(start, new Function<Integer, Flowable<Integer>>() {
+        TestSubscriber<Integer> ts = source.window(start, new Function<Integer, Flowable<Integer>>() {
             @Override
             public Flowable<Integer> apply(Integer v) throws Exception {
                 return end;
@@ -358,7 +359,7 @@ public class FlowableWindowWithStartEndFlowableTest {
 
         start.onError(new TestException());
 
-        to.assertFailure(TestException.class);
+        ts.assertFailure(TestException.class);
 
         assertFalse("Source has observers!", source.hasSubscribers());
         assertFalse("Start has observers!", start.hasSubscribers());
@@ -371,7 +372,7 @@ public class FlowableWindowWithStartEndFlowableTest {
         PublishProcessor<Integer> start = PublishProcessor.create();
         final PublishProcessor<Integer> end = PublishProcessor.create();
 
-        TestSubscriber<Integer> to = source.window(start, new Function<Integer, Flowable<Integer>>() {
+        TestSubscriber<Integer> ts = source.window(start, new Function<Integer, Flowable<Integer>>() {
             @Override
             public Flowable<Integer> apply(Integer v) throws Exception {
                 return end;
@@ -383,7 +384,7 @@ public class FlowableWindowWithStartEndFlowableTest {
         start.onNext(1);
         end.onError(new TestException());
 
-        to.assertFailure(TestException.class);
+        ts.assertFailure(TestException.class);
 
         assertFalse("Source has observers!", source.hasSubscribers());
         assertFalse("Start has observers!", start.hasSubscribers());
@@ -397,5 +398,36 @@ public class FlowableWindowWithStartEndFlowableTest {
         .flatMap(Functions.<Flowable<Integer>>identity())
         .test()
         .assertFailure(TestException.class);
+    }
+
+    @Test
+    public void windowCloseIngoresCancel() {
+        List<Throwable> errors = TestHelper.trackPluginErrors();
+        try {
+            BehaviorProcessor.createDefault(1)
+            .window(BehaviorProcessor.createDefault(1), new Function<Integer, Publisher<Integer>>() {
+                @Override
+                public Publisher<Integer> apply(Integer f) throws Exception {
+                    return new Flowable<Integer>() {
+                        @Override
+                        protected void subscribeActual(
+                                Subscriber<? super Integer> s) {
+                            s.onSubscribe(new BooleanSubscription());
+                            s.onNext(1);
+                            s.onNext(2);
+                            s.onError(new TestException());
+                        }
+                    };
+                }
+            })
+            .test()
+            .assertValueCount(1)
+            .assertNoErrors()
+            .assertNotComplete();
+
+            TestHelper.assertUndeliverable(errors, 0, TestException.class);
+        } finally {
+            RxJavaPlugins.reset();
+        }
     }
 }

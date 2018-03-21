@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.*;
 
 import org.junit.*;
 import org.mockito.*;
@@ -31,11 +31,15 @@ import io.reactivex.Observer;
 import io.reactivex.disposables.*;
 import io.reactivex.exceptions.*;
 import io.reactivex.functions.*;
+import io.reactivex.internal.disposables.DisposableHelper;
 import io.reactivex.internal.functions.Functions;
+import io.reactivex.internal.operators.observable.ObservableBuffer.BufferExactObserver;
+import io.reactivex.internal.operators.observable.ObservableBufferBoundarySupplier.BufferBoundarySupplierObserver;
+import io.reactivex.internal.operators.observable.ObservableBufferTimed.*;
 import io.reactivex.observers.*;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.*;
-import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.*;
 
 public class ObservableBufferTest {
 
@@ -344,7 +348,7 @@ public class ObservableBufferTest {
         Observable<Integer> source = Observable.never();
 
         Observer<List<Integer>> o = TestHelper.mockObserver();
-        TestObserver<List<Integer>> ts = new TestObserver<List<Integer>>(o);
+        TestObserver<List<Integer>> to = new TestObserver<List<Integer>>(o);
 
         source.buffer(100, 200, TimeUnit.MILLISECONDS, scheduler)
         .doOnNext(new Consumer<List<Integer>>() {
@@ -353,7 +357,7 @@ public class ObservableBufferTest {
                 System.out.println(pv);
             }
         })
-        .subscribe(ts);
+        .subscribe(to);
 
         InOrder inOrder = Mockito.inOrder(o);
 
@@ -361,7 +365,7 @@ public class ObservableBufferTest {
 
         inOrder.verify(o, times(5)).onNext(Arrays.<Integer> asList());
 
-        ts.dispose();
+        to.dispose();
 
         scheduler.advanceTimeBy(999, TimeUnit.MILLISECONDS);
 
@@ -1104,9 +1108,9 @@ public class ObservableBufferTest {
 
     @Test
     public void boundaryCancel() {
-        PublishSubject<Object> pp = PublishSubject.create();
+        PublishSubject<Object> ps = PublishSubject.create();
 
-        TestObserver<Collection<Object>> ts = pp
+        TestObserver<Collection<Object>> to = ps
         .buffer(Functions.justCallable(Observable.never()), new Callable<Collection<Object>>() {
             @Override
             public Collection<Object> call() throws Exception {
@@ -1115,11 +1119,11 @@ public class ObservableBufferTest {
         })
         .test();
 
-        assertTrue(pp.hasObservers());
+        assertTrue(ps.hasObservers());
 
-        ts.dispose();
+        to.dispose();
 
-        assertFalse(pp.hasObservers());
+        assertFalse(ps.hasObservers());
     }
 
     @Test
@@ -1173,9 +1177,9 @@ public class ObservableBufferTest {
     @SuppressWarnings("unchecked")
     @Test
     public void boundaryMainError() {
-        PublishSubject<Object> pp = PublishSubject.create();
+        PublishSubject<Object> ps = PublishSubject.create();
 
-        TestObserver<Collection<Object>> ts = pp
+        TestObserver<Collection<Object>> to = ps
         .buffer(Functions.justCallable(Observable.never()), new Callable<Collection<Object>>() {
             @Override
             public Collection<Object> call() throws Exception {
@@ -1184,17 +1188,17 @@ public class ObservableBufferTest {
         })
         .test();
 
-        pp.onError(new TestException());
+        ps.onError(new TestException());
 
-        ts.assertFailure(TestException.class);
+        to.assertFailure(TestException.class);
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void boundaryBoundaryError() {
-        PublishSubject<Object> pp = PublishSubject.create();
+        PublishSubject<Object> ps = PublishSubject.create();
 
-        TestObserver<Collection<Object>> ts = pp
+        TestObserver<Collection<Object>> to = ps
         .buffer(Functions.justCallable(Observable.error(new TestException())), new Callable<Collection<Object>>() {
             @Override
             public Collection<Object> call() throws Exception {
@@ -1203,9 +1207,9 @@ public class ObservableBufferTest {
         })
         .test();
 
-        pp.onError(new TestException());
+        ps.onError(new TestException());
 
-        ts.assertFailure(TestException.class);
+        to.assertFailure(TestException.class);
     }
 
     @Test
@@ -1409,7 +1413,7 @@ public class ObservableBufferTest {
 
             final PublishSubject<Object> ps = PublishSubject.create();
 
-            TestObserver<List<Object>> ts = ps.buffer(1, TimeUnit.SECONDS, scheduler, 5).test();
+            TestObserver<List<Object>> to = ps.buffer(1, TimeUnit.SECONDS, scheduler, 5).test();
 
             ps.onNext(1);
             ps.onNext(2);
@@ -1435,7 +1439,7 @@ public class ObservableBufferTest {
             ps.onComplete();
 
             int items = 0;
-            for (List<Object> o : ts.values()) {
+            for (List<Object> o : to.values()) {
                 items += o.size();
             }
 
@@ -1512,7 +1516,7 @@ public class ObservableBufferTest {
 
         PublishSubject<Integer> closeIndicator = PublishSubject.create();
 
-        TestObserver<List<Integer>> ts = source
+        TestObserver<List<Integer>> to = source
         .buffer(openIndicator, Functions.justFunction(closeIndicator))
         .test();
 
@@ -1527,7 +1531,7 @@ public class ObservableBufferTest {
 
         source.onComplete();
 
-        ts.assertResult(Collections.<Integer>emptyList());
+        to.assertResult(Collections.<Integer>emptyList());
 
         assertFalse(openIndicator.hasObservers());
         assertFalse(closeIndicator.hasObservers());
@@ -1635,7 +1639,7 @@ public class ObservableBufferTest {
 
         PublishSubject<Integer> closeIndicator = PublishSubject.create();
 
-        TestObserver<List<Integer>> ts = source
+        TestObserver<List<Integer>> to = source
         .buffer(openIndicator, Functions.justFunction(closeIndicator))
         .test();
 
@@ -1652,7 +1656,7 @@ public class ObservableBufferTest {
 
         assertFalse(source.hasObservers());
 
-        ts.assertResult(Collections.<Integer>emptyList());
+        to.assertResult(Collections.<Integer>emptyList());
     }
 
     @Test
@@ -1664,7 +1668,7 @@ public class ObservableBufferTest {
 
         PublishSubject<Integer> closeIndicator = PublishSubject.create();
 
-        TestObserver<List<Integer>> ts = source
+        TestObserver<List<Integer>> to = source
         .buffer(openIndicator, Functions.justFunction(closeIndicator))
         .test();
 
@@ -1681,7 +1685,7 @@ public class ObservableBufferTest {
 
         assertFalse(source.hasObservers());
 
-        ts.assertResult(Collections.<Integer>emptyList());
+        to.assertResult(Collections.<Integer>emptyList());
     }
 
     @Test
@@ -1693,7 +1697,7 @@ public class ObservableBufferTest {
 
         PublishSubject<Integer> closeIndicator = PublishSubject.create();
 
-        TestObserver<List<Integer>> ts = source
+        TestObserver<List<Integer>> to = source
         .buffer(openIndicator, Functions.justFunction(closeIndicator))
         .take(1)
         .test();
@@ -1705,7 +1709,7 @@ public class ObservableBufferTest {
         assertFalse(openIndicator.hasObservers());
         assertFalse(closeIndicator.hasObservers());
 
-        ts.assertResult(Collections.<Integer>emptyList());
+        to.assertResult(Collections.<Integer>emptyList());
     }
 
     @Test
@@ -1795,5 +1799,331 @@ public class ObservableBufferTest {
         } finally {
             RxJavaPlugins.reset();
         }
+    }
+
+    @Test
+    public void bufferExactBoundaryDoubleOnSubscribe() {
+        TestHelper.checkDoubleOnSubscribeObservable(
+                new Function<Observable<Object>, ObservableSource<List<Object>>>() {
+                    @Override
+                    public ObservableSource<List<Object>> apply(Observable<Object> f)
+                            throws Exception {
+                        return f.buffer(Observable.never());
+                    }
+                }
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void bufferExactBoundarySecondBufferCrash() {
+        PublishSubject<Integer> ps = PublishSubject.create();
+        PublishSubject<Integer> b = PublishSubject.create();
+
+        TestObserver<List<Integer>> to = ps.buffer(b, new Callable<List<Integer>>() {
+            int calls;
+            @Override
+            public List<Integer> call() throws Exception {
+                if (++calls == 2) {
+                    throw new TestException();
+                }
+                return new ArrayList<Integer>();
+            }
+        }).test();
+
+        b.onNext(1);
+
+        to.assertFailure(TestException.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void bufferExactBoundaryBadSource() {
+        Observable<Integer> ps = new Observable<Integer>() {
+            @Override
+            protected void subscribeActual(Observer<? super Integer> observer) {
+                observer.onSubscribe(Disposables.empty());
+                observer.onComplete();
+                observer.onNext(1);
+                observer.onComplete();
+            }
+        };
+
+        final AtomicReference<Observer<? super Integer>> ref = new AtomicReference<Observer<? super Integer>>();
+        Observable<Integer> b = new Observable<Integer>() {
+            @Override
+            protected void subscribeActual(Observer<? super Integer> observer) {
+                observer.onSubscribe(Disposables.empty());
+                ref.set(observer);
+            }
+        };
+
+        TestObserver<List<Integer>> to = ps.buffer(b).test();
+
+        ref.get().onNext(1);
+
+        to.assertResult(Collections.<Integer>emptyList());
+    }
+
+    @Test
+    public void bufferBoundaryErrorTwice() {
+        List<Throwable> errors = TestHelper.trackPluginErrors();
+        try {
+            BehaviorSubject.createDefault(1)
+            .buffer(Functions.justCallable(new Observable<Integer>() {
+                @Override
+                protected void subscribeActual(Observer<? super Integer> s) {
+                    s.onSubscribe(Disposables.empty());
+                    s.onError(new TestException("first"));
+                    s.onError(new TestException("second"));
+                }
+            }))
+            .test()
+            .assertError(TestException.class)
+            .assertErrorMessage("first")
+            .assertNotComplete();
+
+            TestHelper.assertUndeliverable(errors, 0, TestException.class, "second");
+        } finally {
+            RxJavaPlugins.reset();
+        }
+    }
+
+    @Test
+    public void bufferBoundarySupplierDisposed() {
+        TestObserver<List<Integer>> to = new TestObserver<List<Integer>>();
+        BufferBoundarySupplierObserver<Integer, List<Integer>, Integer> sub =
+                new BufferBoundarySupplierObserver<Integer, List<Integer>, Integer>(
+                        to, Functions.justCallable((List<Integer>)new ArrayList<Integer>()),
+                        Functions.justCallable(Observable.<Integer>never())
+        );
+
+        Disposable bs = Disposables.empty();
+
+        sub.onSubscribe(bs);
+
+        assertFalse(sub.isDisposed());
+
+        sub.dispose();
+
+        assertTrue(sub.isDisposed());
+
+        sub.next();
+
+        assertSame(DisposableHelper.DISPOSED, sub.other.get());
+
+        sub.dispose();
+        sub.dispose();
+
+        assertTrue(bs.isDisposed());
+    }
+
+    @Test
+    public void bufferBoundarySupplierBufferAlreadyCleared() {
+        TestObserver<List<Integer>> to = new TestObserver<List<Integer>>();
+        BufferBoundarySupplierObserver<Integer, List<Integer>, Integer> sub =
+                new BufferBoundarySupplierObserver<Integer, List<Integer>, Integer>(
+                        to, Functions.justCallable((List<Integer>)new ArrayList<Integer>()),
+                        Functions.justCallable(Observable.<Integer>never())
+        );
+
+        Disposable bs = Disposables.empty();
+
+        sub.onSubscribe(bs);
+
+        sub.buffer = null;
+
+        sub.next();
+
+        sub.onNext(1);
+
+        sub.onComplete();
+    }
+
+    @Test
+    public void timedDoubleOnSubscribe() {
+        TestHelper.checkDoubleOnSubscribeObservable(new Function<Observable<Object>, Observable<List<Object>>>() {
+            @Override
+            public Observable<List<Object>> apply(Observable<Object> f)
+                    throws Exception {
+                return f.buffer(1, TimeUnit.SECONDS);
+            }
+        });
+    }
+
+    @Test
+    public void timedCancelledUpfront() {
+        TestScheduler sch = new TestScheduler();
+
+        TestObserver<List<Object>> to = Observable.never()
+        .buffer(1, TimeUnit.MILLISECONDS, sch)
+        .test(true);
+
+        sch.advanceTimeBy(1, TimeUnit.MILLISECONDS);
+
+        to.assertEmpty();
+    }
+
+    @Test
+    public void timedInternalState() {
+        TestScheduler sch = new TestScheduler();
+
+        TestObserver<List<Integer>> to = new TestObserver<List<Integer>>();
+
+        BufferExactUnboundedObserver<Integer, List<Integer>> sub = new BufferExactUnboundedObserver<Integer, List<Integer>>(
+                to, Functions.justCallable((List<Integer>)new ArrayList<Integer>()), 1, TimeUnit.SECONDS, sch);
+
+        sub.onSubscribe(Disposables.empty());
+
+        assertFalse(sub.isDisposed());
+
+        sub.onError(new TestException());
+        sub.onNext(1);
+        sub.onComplete();
+
+        sub.run();
+
+        sub.dispose();
+
+        assertTrue(sub.isDisposed());
+
+        sub.buffer = new ArrayList<Integer>();
+        sub.enter();
+        sub.onComplete();
+    }
+
+    @Test
+    public void timedSkipDoubleOnSubscribe() {
+        TestHelper.checkDoubleOnSubscribeObservable(new Function<Observable<Object>, Observable<List<Object>>>() {
+            @Override
+            public Observable<List<Object>> apply(Observable<Object> f)
+                    throws Exception {
+                return f.buffer(2, 1, TimeUnit.SECONDS);
+            }
+        });
+    }
+
+    @Test
+    public void timedSizedDoubleOnSubscribe() {
+        TestHelper.checkDoubleOnSubscribeObservable(new Function<Observable<Object>, Observable<List<Object>>>() {
+            @Override
+            public Observable<List<Object>> apply(Observable<Object> f)
+                    throws Exception {
+                return f.buffer(2, TimeUnit.SECONDS, 10);
+            }
+        });
+    }
+
+    @Test
+    public void timedSkipInternalState() {
+        TestScheduler sch = new TestScheduler();
+
+        TestObserver<List<Integer>> to = new TestObserver<List<Integer>>();
+
+        BufferSkipBoundedObserver<Integer, List<Integer>> sub = new BufferSkipBoundedObserver<Integer, List<Integer>>(
+                to, Functions.justCallable((List<Integer>)new ArrayList<Integer>()), 1, 1, TimeUnit.SECONDS, sch.createWorker());
+
+        sub.onSubscribe(Disposables.empty());
+
+        sub.enter();
+        sub.onComplete();
+
+        sub.dispose();
+
+        sub.run();
+    }
+
+    @Test
+    public void timedSkipCancelWhenSecondBuffer() {
+        TestScheduler sch = new TestScheduler();
+
+        final TestObserver<List<Integer>> to = new TestObserver<List<Integer>>();
+
+        BufferSkipBoundedObserver<Integer, List<Integer>> sub = new BufferSkipBoundedObserver<Integer, List<Integer>>(
+                to, new Callable<List<Integer>>() {
+                    int calls;
+                    @Override
+                    public List<Integer> call() throws Exception {
+                        if (++calls == 2) {
+                            to.cancel();
+                        }
+                        return new ArrayList<Integer>();
+                    }
+                }, 1, 1, TimeUnit.SECONDS, sch.createWorker());
+
+        sub.onSubscribe(Disposables.empty());
+
+        sub.run();
+
+        assertTrue(to.isCancelled());
+    }
+
+    @Test
+    public void timedSizeBufferAlreadyCleared() {
+        TestScheduler sch = new TestScheduler();
+
+        TestObserver<List<Integer>> to = new TestObserver<List<Integer>>();
+
+        BufferExactBoundedObserver<Integer, List<Integer>> sub =
+                new BufferExactBoundedObserver<Integer, List<Integer>>(
+                        to, Functions.justCallable((List<Integer>)new ArrayList<Integer>()),
+                        1, TimeUnit.SECONDS, 1, false, sch.createWorker())
+        ;
+
+        Disposable bs = Disposables.empty();
+
+        sub.onSubscribe(bs);
+
+        sub.producerIndex++;
+
+        sub.run();
+
+        assertFalse(sub.isDisposed());
+
+        sub.enter();
+        sub.onComplete();
+
+        sub.dispose();
+
+        assertTrue(sub.isDisposed());
+
+        sub.run();
+
+        sub.onNext(1);
+    }
+
+    @Test
+    public void bufferExactDoubleOnSubscribe() {
+        TestHelper.checkDoubleOnSubscribeObservable(new Function<Observable<Object>, ObservableSource<List<Object>>>() {
+            @Override
+            public ObservableSource<List<Object>> apply(Observable<Object> o)
+                    throws Exception {
+                return o.buffer(1);
+            }
+        });
+    }
+
+    @Test
+    public void bufferExactState() {
+        TestObserver<List<Integer>> to = new TestObserver<List<Integer>>();
+
+        BufferExactObserver<Integer, List<Integer>> sub = new BufferExactObserver<Integer, List<Integer>>(
+                to, 1, Functions.justCallable((List<Integer>)new ArrayList<Integer>())
+        );
+
+        sub.onComplete();
+        sub.onNext(1);
+        sub.onComplete();
+    }
+
+    @Test
+    public void bufferSkipDoubleOnSubscribe() {
+        TestHelper.checkDoubleOnSubscribeObservable(new Function<Observable<Object>, ObservableSource<List<Object>>>() {
+            @Override
+            public ObservableSource<List<Object>> apply(Observable<Object> o)
+                    throws Exception {
+                return o.buffer(1, 2);
+            }
+        });
     }
 }

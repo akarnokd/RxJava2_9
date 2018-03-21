@@ -29,8 +29,10 @@ import io.reactivex.*;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.disposables.*;
+import io.reactivex.exceptions.TestException;
 import io.reactivex.functions.*;
 import io.reactivex.internal.functions.Functions;
+import io.reactivex.internal.util.ExceptionHelper;
 import io.reactivex.observables.ConnectableObservable;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.schedulers.*;
@@ -184,20 +186,20 @@ public class ObservableRefCountTest {
                 .publish().refCount();
 
         for (int i = 0; i < 10; i++) {
-            TestObserver<Long> ts1 = new TestObserver<Long>();
-            TestObserver<Long> ts2 = new TestObserver<Long>();
-            r.subscribe(ts1);
-            r.subscribe(ts2);
+            TestObserver<Long> to1 = new TestObserver<Long>();
+            TestObserver<Long> to2 = new TestObserver<Long>();
+            r.subscribe(to1);
+            r.subscribe(to2);
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
             }
-            ts1.dispose();
-            ts2.dispose();
-            ts1.assertNoErrors();
-            ts2.assertNoErrors();
-            assertTrue(ts1.valueCount() > 0);
-            assertTrue(ts2.valueCount() > 0);
+            to1.dispose();
+            to2.dispose();
+            to1.assertNoErrors();
+            to2.assertNoErrors();
+            assertTrue(to1.valueCount() > 0);
+            assertTrue(to2.valueCount() > 0);
         }
 
         assertEquals(10, subscribeCount.get());
@@ -492,19 +494,19 @@ public class ObservableRefCountTest {
         })
         .publish().refCount();
 
-        TestObserver<Integer> ts1 = new TestObserver<Integer>();
-        TestObserver<Integer> ts2 = new TestObserver<Integer>();
+        TestObserver<Integer> to1 = new TestObserver<Integer>();
+        TestObserver<Integer> to2 = new TestObserver<Integer>();
 
-        combined.subscribe(ts1);
-        combined.subscribe(ts2);
+        combined.subscribe(to1);
+        combined.subscribe(to2);
 
-        ts1.assertTerminated();
-        ts1.assertNoErrors();
-        ts1.assertValue(30);
+        to1.assertTerminated();
+        to1.assertNoErrors();
+        to1.assertValue(30);
 
-        ts2.assertTerminated();
-        ts2.assertNoErrors();
-        ts2.assertValue(30);
+        to2.assertTerminated();
+        to2.assertNoErrors();
+        to2.assertValue(30);
     }
 
     @Test(timeout = 10000)
@@ -769,5 +771,179 @@ public class ObservableRefCountTest {
         s.dispose();
 
         assertTrue(((Disposable)co).isDisposed());
+    }
+
+    static final class BadObservableSubscribe extends ConnectableObservable<Object> {
+
+        @Override
+        public void connect(Consumer<? super Disposable> connection) {
+            try {
+                connection.accept(Disposables.empty());
+            } catch (Throwable ex) {
+                throw ExceptionHelper.wrapOrThrow(ex);
+            }
+        }
+
+        @Override
+        protected void subscribeActual(Observer<? super Object> observer) {
+            throw new TestException("subscribeActual");
+        }
+    }
+
+    static final class BadObservableDispose extends ConnectableObservable<Object> implements Disposable {
+
+        @Override
+        public void dispose() {
+            throw new TestException("dispose");
+        }
+
+        @Override
+        public boolean isDisposed() {
+            return false;
+        }
+
+        @Override
+        public void connect(Consumer<? super Disposable> connection) {
+            try {
+                connection.accept(Disposables.empty());
+            } catch (Throwable ex) {
+                throw ExceptionHelper.wrapOrThrow(ex);
+            }
+        }
+
+        @Override
+        protected void subscribeActual(Observer<? super Object> observer) {
+        }
+    }
+
+    static final class BadObservableConnect extends ConnectableObservable<Object> {
+
+        @Override
+        public void connect(Consumer<? super Disposable> connection) {
+            throw new TestException("connect");
+        }
+
+        @Override
+        protected void subscribeActual(Observer<? super Object> observer) {
+            observer.onSubscribe(Disposables.empty());
+        }
+    }
+
+    @Test
+    public void badSourceSubscribe() {
+        BadObservableSubscribe bo = new BadObservableSubscribe();
+
+        try {
+            bo.refCount()
+            .test();
+            fail("Should have thrown");
+        } catch (NullPointerException ex) {
+            assertTrue(ex.getCause() instanceof TestException);
+        }
+    }
+
+    @Test
+    public void badSourceDispose() {
+        BadObservableDispose bo = new BadObservableDispose();
+
+        try {
+            bo.refCount()
+            .test()
+            .cancel();
+            fail("Should have thrown");
+        } catch (TestException expected) {
+        }
+    }
+
+    @Test
+    public void badSourceConnect() {
+        BadObservableConnect bo = new BadObservableConnect();
+
+        try {
+            bo.refCount()
+            .test();
+            fail("Should have thrown");
+        } catch (NullPointerException ex) {
+            assertTrue(ex.getCause() instanceof TestException);
+        }
+    }
+
+    static final class BadObservableSubscribe2 extends ConnectableObservable<Object> {
+
+        int count;
+
+        @Override
+        public void connect(Consumer<? super Disposable> connection) {
+            try {
+                connection.accept(Disposables.empty());
+            } catch (Throwable ex) {
+                throw ExceptionHelper.wrapOrThrow(ex);
+            }
+        }
+
+        @Override
+        protected void subscribeActual(Observer<? super Object> observer) {
+            if (++count == 1) {
+                observer.onSubscribe(Disposables.empty());
+            } else {
+                throw new TestException("subscribeActual");
+            }
+        }
+    }
+
+    @Test
+    public void badSourceSubscribe2() {
+        BadObservableSubscribe2 bo = new BadObservableSubscribe2();
+
+        Observable<Object> o = bo.refCount();
+        o.test();
+        try {
+            o.test();
+            fail("Should have thrown");
+        } catch (NullPointerException ex) {
+            assertTrue(ex.getCause() instanceof TestException);
+        }
+    }
+
+    static final class BadObservableConnect2 extends ConnectableObservable<Object>
+    implements Disposable {
+
+        @Override
+        public void connect(Consumer<? super Disposable> connection) {
+            try {
+                connection.accept(Disposables.empty());
+            } catch (Throwable ex) {
+                throw ExceptionHelper.wrapOrThrow(ex);
+            }
+        }
+
+        @Override
+        protected void subscribeActual(Observer<? super Object> observer) {
+            observer.onSubscribe(Disposables.empty());
+            observer.onComplete();
+        }
+
+        @Override
+        public void dispose() {
+            throw new TestException("dispose");
+        }
+
+        @Override
+        public boolean isDisposed() {
+            return false;
+        }
+    }
+
+    @Test
+    public void badSourceCompleteDisconnect() {
+        BadObservableConnect2 bo = new BadObservableConnect2();
+
+        try {
+            bo.refCount()
+            .test();
+            fail("Should have thrown");
+        } catch (NullPointerException ex) {
+            assertTrue(ex.getCause() instanceof TestException);
+        }
     }
 }

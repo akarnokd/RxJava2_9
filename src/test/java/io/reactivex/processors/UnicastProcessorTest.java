@@ -23,7 +23,7 @@ import org.junit.Test;
 import io.reactivex.*;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.exceptions.TestException;
-import io.reactivex.internal.fuseable.QueueSubscription;
+import io.reactivex.internal.fuseable.*;
 import io.reactivex.internal.subscriptions.BooleanSubscription;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.subscribers.*;
@@ -39,13 +39,13 @@ public class UnicastProcessorTest extends FlowableProcessorTest<Object> {
     public void fusionLive() {
         UnicastProcessor<Integer> ap = UnicastProcessor.create();
 
-        TestSubscriber<Integer> ts = SubscriberFusion.newTest(QueueSubscription.ANY);
+        TestSubscriber<Integer> ts = SubscriberFusion.newTest(QueueFuseable.ANY);
 
         ap.subscribe(ts);
 
         ts
         .assertOf(SubscriberFusion.<Integer>assertFuseable())
-        .assertOf(SubscriberFusion.<Integer>assertFusionMode(QueueSubscription.ASYNC));
+        .assertOf(SubscriberFusion.<Integer>assertFusionMode(QueueFuseable.ASYNC));
 
         ts.assertNoValues().assertNoErrors().assertNotComplete();
 
@@ -64,13 +64,13 @@ public class UnicastProcessorTest extends FlowableProcessorTest<Object> {
         ap.onNext(1);
         ap.onComplete();
 
-        TestSubscriber<Integer> ts = SubscriberFusion.newTest(QueueSubscription.ANY);
+        TestSubscriber<Integer> ts = SubscriberFusion.newTest(QueueFuseable.ANY);
 
         ap.subscribe(ts);
 
         ts
         .assertOf(SubscriberFusion.<Integer>assertFuseable())
-        .assertOf(SubscriberFusion.<Integer>assertFusionMode(QueueSubscription.ASYNC))
+        .assertOf(SubscriberFusion.<Integer>assertFusionMode(QueueFuseable.ASYNC))
         .assertResult(1);
     }
 
@@ -95,7 +95,7 @@ public class UnicastProcessorTest extends FlowableProcessorTest<Object> {
         ap.onNext(1);
         ap.onError(new RuntimeException());
 
-        TestSubscriber<Integer> ts = SubscriberFusion.newTest(QueueSubscription.ANY);
+        TestSubscriber<Integer> ts = SubscriberFusion.newTest(QueueFuseable.ANY);
 
         ap.subscribe(ts);
         ts
@@ -263,11 +263,11 @@ public class UnicastProcessorTest extends FlowableProcessorTest<Object> {
     public void rejectSyncFusion() {
         UnicastProcessor<Object> p = UnicastProcessor.create();
 
-        TestSubscriber<Object> ts = SubscriberFusion.newTest(QueueSubscription.SYNC);
+        TestSubscriber<Object> ts = SubscriberFusion.newTest(QueueFuseable.SYNC);
 
         p.subscribe(ts);
 
-        SubscriberFusion.assertFusion(ts, QueueSubscription.NONE);
+        SubscriberFusion.assertFusion(ts, QueueFuseable.NONE);
     }
 
     @Test
@@ -297,7 +297,7 @@ public class UnicastProcessorTest extends FlowableProcessorTest<Object> {
         for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
             final UnicastProcessor<Object> p = UnicastProcessor.create();
 
-            final TestSubscriber<Object> ts = SubscriberFusion.newTest(QueueSubscription.ANY);
+            final TestSubscriber<Object> ts = SubscriberFusion.newTest(QueueFuseable.ANY);
 
             p.subscribe(ts);
 
@@ -316,6 +316,128 @@ public class UnicastProcessorTest extends FlowableProcessorTest<Object> {
             };
 
             TestHelper.race(r1, r2);
+        }
+    }
+
+    @Test
+    public void subscribeRace() {
+        for (int i = 0; i < TestHelper.RACE_DEFAULT_LOOPS; i++) {
+            final UnicastProcessor<Integer> us = UnicastProcessor.create();
+
+            final TestSubscriber<Integer> ts1 = new TestSubscriber<Integer>();
+            final TestSubscriber<Integer> ts2 = new TestSubscriber<Integer>();
+
+            Runnable r1 = new Runnable() {
+                @Override
+                public void run() {
+                    us.subscribe(ts1);
+                }
+            };
+
+            Runnable r2 = new Runnable() {
+                @Override
+                public void run() {
+                    us.subscribe(ts2);
+                }
+            };
+
+            TestHelper.race(r1, r2);
+
+            if (ts1.errorCount() == 0) {
+                ts2.assertFailure(IllegalStateException.class);
+            } else
+            if (ts2.errorCount() == 0) {
+                ts1.assertFailure(IllegalStateException.class);
+            } else {
+                fail("Neither TestObserver failed");
+            }
+        }
+    }
+
+    @Test
+    public void hasObservers() {
+        UnicastProcessor<Integer> us = UnicastProcessor.create();
+
+        assertFalse(us.hasSubscribers());
+
+        TestSubscriber<Integer> ts = us.test();
+
+        assertTrue(us.hasSubscribers());
+
+        ts.cancel();
+
+        assertFalse(us.hasSubscribers());
+    }
+
+    @Test
+    public void drainFusedFailFast() {
+        UnicastProcessor<Integer> us = UnicastProcessor.create(false);
+
+
+        TestSubscriber<Integer> ts = us.to(SubscriberFusion.<Integer>test(1, QueueFuseable.ANY, false));
+
+        us.done = true;
+        us.drainFused(ts);
+
+        ts.assertResult();
+    }
+
+    @Test
+    public void drainFusedFailFastEmpty() {
+        UnicastProcessor<Integer> us = UnicastProcessor.create(false);
+
+
+        TestSubscriber<Integer> ts = us.to(SubscriberFusion.<Integer>test(1, QueueFuseable.ANY, false));
+
+        us.drainFused(ts);
+
+        ts.assertEmpty();
+    }
+
+    @Test
+    public void checkTerminatedFailFastEmpty() {
+        UnicastProcessor<Integer> us = UnicastProcessor.create(false);
+
+        TestSubscriber<Integer> ts = us.to(SubscriberFusion.<Integer>test(1, QueueFuseable.ANY, false));
+
+        us.checkTerminated(true, true, false, ts, us.queue);
+
+        ts.assertEmpty();
+    }
+
+    @Test
+    public void alreadyCancelled() {
+        UnicastProcessor<Integer> us = UnicastProcessor.create(false);
+
+        us.test().cancel();
+
+        BooleanSubscription bs = new BooleanSubscription();
+        us.onSubscribe(bs);
+
+        assertTrue(bs.isCancelled());
+
+        List<Throwable> errors = TestHelper.trackPluginErrors();
+        try {
+            us.onError(new TestException());
+
+            TestHelper.assertUndeliverable(errors, 0, TestException.class);
+        } finally {
+            RxJavaPlugins.reset();
+        }
+    }
+
+    @Test
+    public void unicastSubscriptionBadRequest() {
+        UnicastProcessor<Integer> us = UnicastProcessor.create(false);
+
+        UnicastProcessor<Integer>.UnicastQueueSubscription usc = us.new UnicastQueueSubscription();
+
+        List<Throwable> errors = TestHelper.trackPluginErrors();
+        try {
+            usc.request(-1);
+            TestHelper.assertError(errors, 0, IllegalArgumentException.class);
+        } finally {
+            RxJavaPlugins.reset();
         }
     }
 }

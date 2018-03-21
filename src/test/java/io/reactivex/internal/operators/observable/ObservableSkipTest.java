@@ -21,6 +21,7 @@ import java.util.Arrays;
 import org.junit.Test;
 
 import io.reactivex.*;
+import io.reactivex.functions.Function;
 import io.reactivex.observers.TestObserver;
 
 public class ObservableSkipTest {
@@ -136,16 +137,27 @@ public class ObservableSkipTest {
 
     @Test
     public void testRequestOverflowDoesNotOccur() {
-        TestObserver<Integer> ts = new TestObserver<Integer>();
-        Observable.range(1, 10).skip(5).subscribe(ts);
-        ts.assertTerminated();
-        ts.assertComplete();
-        ts.assertNoErrors();
-        assertEquals(Arrays.asList(6,7,8,9,10), ts.values());
+        TestObserver<Integer> to = new TestObserver<Integer>();
+        Observable.range(1, 10).skip(5).subscribe(to);
+        to.assertTerminated();
+        to.assertComplete();
+        to.assertNoErrors();
+        assertEquals(Arrays.asList(6,7,8,9,10), to.values());
     }
 
     @Test
     public void dispose() {
         TestHelper.checkDisposed(Observable.just(1).skip(2));
+    }
+
+    @Test
+    public void doubleOnSubscribe() {
+        TestHelper.checkDoubleOnSubscribeObservable(new Function<Observable<Object>, Observable<Object>>() {
+            @Override
+            public Observable<Object> apply(Observable<Object> o)
+                    throws Exception {
+                return o.skip(1);
+            }
+        });
     }
 }

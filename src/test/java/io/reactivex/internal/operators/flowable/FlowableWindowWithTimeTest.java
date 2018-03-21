@@ -561,7 +561,7 @@ public class FlowableWindowWithTimeTest {
 
         final FlowableProcessor<Integer> ps = PublishProcessor.<Integer>create();
 
-        TestSubscriber<Integer> to = new TestSubscriber<Integer>() {
+        TestSubscriber<Integer> ts = new TestSubscriber<Integer>() {
             @Override
             public void onNext(Integer t) {
                 super.onNext(t);
@@ -579,11 +579,11 @@ public class FlowableWindowWithTimeTest {
                 return v;
             }
         })
-        .subscribe(to);
+        .subscribe(ts);
 
         ps.onNext(1);
 
-        to
+        ts
         .awaitDone(1, TimeUnit.SECONDS)
         .assertResult(1, 2);
     }
@@ -594,7 +594,7 @@ public class FlowableWindowWithTimeTest {
 
         final FlowableProcessor<Integer> ps = PublishProcessor.<Integer>create();
 
-        TestSubscriber<Integer> to = new TestSubscriber<Integer>() {
+        TestSubscriber<Integer> ts = new TestSubscriber<Integer>() {
             @Override
             public void onNext(Integer t) {
                 super.onNext(t);
@@ -612,11 +612,11 @@ public class FlowableWindowWithTimeTest {
                 return v;
             }
         })
-        .subscribe(to);
+        .subscribe(ts);
 
         ps.onNext(1);
 
-        to
+        ts
         .awaitDone(1, TimeUnit.SECONDS)
         .assertResult(1, 2);
     }
@@ -627,7 +627,7 @@ public class FlowableWindowWithTimeTest {
 
         final FlowableProcessor<Integer> ps = PublishProcessor.<Integer>create();
 
-        TestSubscriber<Integer> to = new TestSubscriber<Integer>() {
+        TestSubscriber<Integer> ts = new TestSubscriber<Integer>() {
             @Override
             public void onNext(Integer t) {
                 super.onNext(t);
@@ -645,11 +645,11 @@ public class FlowableWindowWithTimeTest {
                 return v;
             }
         })
-        .subscribe(to);
+        .subscribe(ts);
 
         ps.onNext(1);
 
-        to
+        ts
         .awaitDone(1, TimeUnit.SECONDS)
         .assertResult(1, 2);
     }
@@ -660,7 +660,7 @@ public class FlowableWindowWithTimeTest {
 
         final FlowableProcessor<Integer> ps = PublishProcessor.<Integer>create();
 
-        TestSubscriber<Integer> to = new TestSubscriber<Integer>() {
+        TestSubscriber<Integer> ts = new TestSubscriber<Integer>() {
             @Override
             public void onNext(Integer t) {
                 super.onNext(t);
@@ -678,11 +678,11 @@ public class FlowableWindowWithTimeTest {
                 return v;
             }
         })
-        .subscribe(to);
+        .subscribe(ts);
 
         ps.onNext(1);
 
-        to
+        ts
         .awaitDone(1, TimeUnit.SECONDS)
         .assertResult(1, 2);
     }
@@ -690,9 +690,9 @@ public class FlowableWindowWithTimeTest {
     @Test
     public void sizeTimeTimeout() {
         TestScheduler scheduler = new TestScheduler();
-        PublishProcessor<Integer> ps = PublishProcessor.<Integer>create();
+        PublishProcessor<Integer> pp = PublishProcessor.<Integer>create();
 
-        TestSubscriber<Flowable<Integer>> ts = ps.window(5, TimeUnit.MILLISECONDS, scheduler, 100)
+        TestSubscriber<Flowable<Integer>> ts = pp.window(5, TimeUnit.MILLISECONDS, scheduler, 100)
         .test()
         .assertValueCount(1);
 
@@ -804,6 +804,87 @@ public class FlowableWindowWithTimeTest {
 
         ts.assertValueCount(2)
         .assertNoErrors()
+        .assertNotComplete();
+    }
+
+    @Test
+    public void doubleOnSubscribe() {
+        TestHelper.checkDoubleOnSubscribeFlowable(new Function<Flowable<Object>, Publisher<Flowable<Object>>>() {
+            @Override
+            public Publisher<Flowable<Object>> apply(Flowable<Object> f)
+                    throws Exception {
+                return f.window(1, TimeUnit.SECONDS, 1).takeLast(0);
+            }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void firstWindowMissingBackpressure() {
+        Flowable.never()
+        .window(1, TimeUnit.SECONDS, 1)
+        .test(0L)
+        .assertFailure(MissingBackpressureException.class);
+    }
+
+    @Test
+    public void nextWindowMissingBackpressure() {
+        PublishProcessor<Integer> pp = PublishProcessor.create();
+
+        TestSubscriber<Flowable<Integer>> ts = pp.window(1, TimeUnit.SECONDS, 1)
+        .test(1L);
+
+        pp.onNext(1);
+
+        ts.assertValueCount(1)
+        .assertError(MissingBackpressureException.class)
+        .assertNotComplete();
+    }
+
+    @Test
+    public void cancelUpfront() {
+        Flowable.never()
+        .window(1, TimeUnit.SECONDS, 1)
+        .test(0L, true)
+        .assertEmpty();
+    }
+
+    @Test
+    public void nextWindowMissingBackpressureDrainOnSize() {
+        final PublishProcessor<Integer> pp = PublishProcessor.create();
+
+        TestSubscriber<Flowable<Integer>> ts = pp.window(1, TimeUnit.MINUTES, 1)
+        .subscribeWith(new TestSubscriber<Flowable<Integer>>(2) {
+            int calls;
+            @Override
+            public void onNext(Flowable<Integer> t) {
+                super.onNext(t);
+                if (++calls == 2) {
+                    pp.onNext(2);
+                }
+            }
+        });
+
+        pp.onNext(1);
+
+        ts.assertValueCount(2)
+        .assertError(MissingBackpressureException.class)
+        .assertNotComplete();
+    }
+
+    @Test
+    public void nextWindowMissingBackpressureDrainOnTime() {
+        final PublishProcessor<Integer> pp = PublishProcessor.create();
+
+        final TestScheduler sch = new TestScheduler();
+
+        TestSubscriber<Flowable<Integer>> ts = pp.window(1, TimeUnit.MILLISECONDS, sch, 10)
+        .test(1);
+
+        sch.advanceTimeBy(1, TimeUnit.MILLISECONDS);
+
+        ts.assertValueCount(1)
+        .assertError(MissingBackpressureException.class)
         .assertNotComplete();
     }
 }
