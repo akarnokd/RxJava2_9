@@ -34,11 +34,14 @@ matrix:
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 
+# prevent travis running gradle assemble; let the build script do it anyway
+install: true
+
 script:
   - echo PATH = ${PATH}
   - echo JAVA_HOME = ${JAVA_HOME}
   - java -version
-  - gradlew build --stacktrace
+  - ./gradlew build --stacktrace
 
  # cache between builds
 cache:
