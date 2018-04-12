@@ -1736,8 +1736,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <p>
      * <em>Important note:</em> This ObservableSource is blocking; you cannot dispose it.
      * <p>
-     * Unlike 1.x, cancelling the Observable won't cancel the future. If necessary, one can use composition to achieve the
-     * cancellation effect: {@code futureObservableSource.doOnCancel(() -> future.cancel(true));}.
+     * Unlike 1.x, disposing the Observable won't cancel the future. If necessary, one can use composition to achieve the
+     * cancellation effect: {@code futureObservableSource.doOnDispose(() -> future.cancel(true));}.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code fromFuture} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -1767,8 +1767,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * return value of the {@link Future#get} method of that object, by passing the object into the {@code from}
      * method.
      * <p>
-     * Unlike 1.x, cancelling the Observable won't cancel the future. If necessary, one can use composition to achieve the
-     * cancellation effect: {@code futureObservableSource.doOnCancel(() -> future.cancel(true));}.
+     * Unlike 1.x, disposing the Observable won't cancel the future. If necessary, one can use composition to achieve the
+     * cancellation effect: {@code futureObservableSource.doOnDispose(() -> future.cancel(true));}.
      * <p>
      * <em>Important note:</em> This ObservableSource is blocking; you cannot dispose it.
      * <dl>
@@ -1805,8 +1805,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * return value of the {@link Future#get} method of that object, by passing the object into the {@code from}
      * method.
      * <p>
-     * Unlike 1.x, cancelling the Observable won't cancel the future. If necessary, one can use composition to achieve the
-     * cancellation effect: {@code futureObservableSource.doOnCancel(() -> future.cancel(true));}.
+     * Unlike 1.x, disposing the Observable won't cancel the future. If necessary, one can use composition to achieve the
+     * cancellation effect: {@code futureObservableSource.doOnDispose(() -> future.cancel(true));}.
      * <p>
      * <em>Important note:</em> This ObservableSource is blocking; you cannot dispose it.
      * <dl>
@@ -1846,8 +1846,8 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * return value of the {@link Future#get} method of that object, by passing the object into the {@code from}
      * method.
      * <p>
-     * Unlike 1.x, cancelling the Observable won't cancel the future. If necessary, one can use composition to achieve the
-     * cancellation effect: {@code futureObservableSource.doOnCancel(() -> future.cancel(true));}.
+     * Unlike 1.x, disposing the Observable won't cancel the future. If necessary, one can use composition to achieve the
+     * cancellation effect: {@code futureObservableSource.doOnDispose(() -> future.cancel(true));}.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
@@ -5039,6 +5039,10 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code blockingForEach} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If the source signals an error, the operator wraps a checked {@link Exception}
+     *  into {@link RuntimeException} and throws that. Otherwise, {@code RuntimeException}s and
+     *  {@link Error}s are rethrown as they are.</dd>
      * </dl>
      *
      * @param onNext
@@ -5108,6 +5112,10 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code blockingLast} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If the source signals an error, the operator wraps a checked {@link Exception}
+     *  into {@link RuntimeException} and throws that. Otherwise, {@code RuntimeException}s and
+     *  {@link Error}s are rethrown as they are.</dd>
      * </dl>
      *
      * @return the last item emitted by this {@code Observable}
@@ -5135,6 +5143,10 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code blockingLast} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If the source signals an error, the operator wraps a checked {@link Exception}
+     *  into {@link RuntimeException} and throws that. Otherwise, {@code RuntimeException}s and
+     *  {@link Error}s are rethrown as they are.</dd>
      * </dl>
      *
      * @param defaultItem
@@ -5228,6 +5240,10 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code blockingSingle} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If the source signals an error, the operator wraps a checked {@link Exception}
+     *  into {@link RuntimeException} and throws that. Otherwise, {@code RuntimeException}s and
+     *  {@link Error}s are rethrown as they are.</dd>
      * </dl>
      *
      * @return the single item emitted by this {@code Observable}
@@ -5252,6 +5268,10 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code blockingSingle} does not operate by default on a particular {@link Scheduler}.</dd>
+     *  <dt><b>Error handling:</b></dt>
+     *  <dd>If the source signals an error, the operator wraps a checked {@link Exception}
+     *  into {@link RuntimeException} and throws that. Otherwise, {@code RuntimeException}s and
+     *  {@link Error}s are rethrown as they are.</dd>
      * </dl>
      *
      * @param defaultItem
@@ -7497,7 +7517,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * returned Observable cancels the flow and terminates with that type of terminal event:
      * <pre><code>
      * Observable.just(createOnNext(1), createOnComplete(), createOnNext(2))
-     * .doOnCancel(() -&gt; System.out.println("Cancelled!"));
+     * .doOnDispose(() -&gt; System.out.println("Cancelled!"));
      * .test()
      * .assertResult(1);
      * </code></pre>

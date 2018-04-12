@@ -3,7 +3,10 @@ language: java
 sudo: required
 dist: trusty
 group: edge
-jdk: oraclejdk9
+jdk:
+  - oraclejdk9
+  - oraclejdk10
+  - oraclejdk11
 
 env:
   - RXJAVA_TARGET=1.6

@@ -189,6 +189,7 @@ public final class BehaviorProcessor<T> extends FlowableProcessor<T> {
      * @return the constructed {@link BehaviorProcessor}
      */
     @CheckReturnValue
+    @NonNull
     public static <T> BehaviorProcessor<T> create() {
         return new BehaviorProcessor<T>();
     }
@@ -205,6 +206,7 @@ public final class BehaviorProcessor<T> extends FlowableProcessor<T> {
      * @return the constructed {@link BehaviorProcessor}
      */
     @CheckReturnValue
+    @NonNull
     public static <T> BehaviorProcessor<T> createDefault(T defaultValue) {
         ObjectHelper.requireNonNull(defaultValue, "defaultValue is null");
         return new BehaviorProcessor<T>(defaultValue);
@@ -348,6 +350,7 @@ public final class BehaviorProcessor<T> extends FlowableProcessor<T> {
     }
 
     @Override
+    @Nullable
     public Throwable getThrowable() {
         Object o = value.get();
         if (NotificationLite.isError(o)) {
@@ -361,6 +364,7 @@ public final class BehaviorProcessor<T> extends FlowableProcessor<T> {
      * <p>The method is thread-safe.
      * @return a single value the BehaviorProcessor currently has or null if no such value exists
      */
+    @Nullable
     public T getValue() {
         Object o = value.get();
         if (NotificationLite.isComplete(o) || NotificationLite.isError(o)) {

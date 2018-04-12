@@ -15,6 +15,7 @@ package io.reactivex.subjects;
 
 import io.reactivex.annotations.CheckReturnValue;
 import io.reactivex.annotations.Nullable;
+import io.reactivex.annotations.NonNull;
 import java.util.concurrent.atomic.*;
 
 import io.reactivex.Observer;
@@ -114,6 +115,7 @@ public final class PublishSubject<T> extends Subject<T> {
      * @return the new PublishSubject
      */
     @CheckReturnValue
+    @NonNull
     public static <T> PublishSubject<T> create() {
         return new PublishSubject<T>();
     }
@@ -223,10 +225,6 @@ public final class PublishSubject<T> extends Subject<T> {
     @Override
     public void onNext(T t) {
         ObjectHelper.requireNonNull(t, "onNext called with null. Null values are generally not allowed in 2.x operators and sources.");
-
-        if (subscribers.get() == TERMINATED) {
-            return;
-        }
         for (PublishDisposable<T> s : subscribers.get()) {
             s.onNext(t);
         }

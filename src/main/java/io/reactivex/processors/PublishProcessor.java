@@ -76,6 +76,7 @@ public final class PublishProcessor<T> extends FlowableProcessor<T> {
      * @return the new PublishProcessor
      */
     @CheckReturnValue
+    @NonNull
     public static <T> PublishProcessor<T> create() {
         return new PublishProcessor<T>();
     }
@@ -188,9 +189,6 @@ public final class PublishProcessor<T> extends FlowableProcessor<T> {
     @Override
     public void onNext(T t) {
         ObjectHelper.requireNonNull(t, "onNext called with null. Null values are generally not allowed in 2.x operators and sources.");
-        if (subscribers.get() == TERMINATED) {
-            return;
-        }
         for (PublishSubscription<T> s : subscribers.get()) {
             s.onNext(t);
         }
@@ -261,6 +259,7 @@ public final class PublishProcessor<T> extends FlowableProcessor<T> {
     }
 
     @Override
+    @Nullable
     public Throwable getThrowable() {
         if (subscribers.get() == TERMINATED) {
             return error;
