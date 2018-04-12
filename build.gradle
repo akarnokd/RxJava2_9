@@ -257,7 +257,7 @@ task testng(type: Test) {
 check.dependsOn testng 
 
 jacoco {
-    toolVersion = "0.7.9" // See http://www.eclemma.org/jacoco/.
+    toolVersion = "0.8.1" // See http://www.eclemma.org/jacoco/.
 }
 
 task GCandMem(dependsOn: "check") doLast {
