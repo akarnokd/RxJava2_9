@@ -38,6 +38,7 @@ script:
   - echo PATH = ${PATH}
   - echo JAVA_HOME = ${JAVA_HOME}
   - java -version
+  - gradlew build --stacktrace
 
  # cache between builds
 cache:
