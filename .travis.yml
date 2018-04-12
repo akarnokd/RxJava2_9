@@ -3,32 +3,41 @@ language: java
 sudo: required
 dist: trusty
 group: edge
-jdk:
-  - oraclejdk9
-  - oraclejdk10
-  - oraclejdk11
-
-env:
-  - RXJAVA_TARGET=1.6
-  - RXJAVA_TARGET=1.8
-  - RXJAVA_TARGET=1.9
-
-#jdk:
-#  - oraclejdk9
 
 before_install:
   - chmod +x gradlew
   - mkdir -p ~/.gradle && echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
   - export GRADLE_OPTS=-Xmx1024m
-#  - cd ~
-#  - wget http://download.java.net/java/jdk9/archive/181/binaries/jdk-9+181_linux-x64_bin.tar.gz
-#  - tar -xzf jdk-9+181_linux-x64_bin.tar.gz
-#  - export JAVA_HOME=~/jdk-9
-#  - PATH=$JAVA_HOME/bin:$PATH
-#  - cd -
+  - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
+
+matrix:
+  include:
+    - env: JDK='Oracle JDK 9 target 6' RXJAVA_TARGET=1.6
+      jdk: oraclejdk9
+    - env: JDK='Oracle JDK 9 target 8' RXJAVA_TARGET=1.8
+      jdk: oraclejdk9
+    - env: JDK='Oracle JDK 9 target 9' RXJAVA_TARGET=1.9
+      jdk: oraclejdk9
+    - env: JDK='Oracle JDK 10 target 6' RXJAVA_TARGET=1.6
+      install: . ./install-jdk.sh -F 10 -L BCL
+    - env: JDK='Oracle JDK 10 target 8' RXJAVA_TARGET=1.8
+      install: . ./install-jdk.sh -F 10 -L BCL
+    - env: JDK='Oracle JDK 10 target 9' RXJAVA_TARGET=1.9
+      install: . ./install-jdk.sh -F 10 -L BCL
+    - env: JDK='Oracle JDK 11 target 6' RXJAVA_TARGET=1.6
+      install: . ./install-jdk.sh -F 11 -L BCL
+    - env: JDK='Oracle JDK 11 target 8' RXJAVA_TARGET=1.8
+      install: . ./install-jdk.sh -F 11 -L BCL
+    - env: JDK='Oracle JDK 11 target 9' RXJAVA_TARGET=1.9
+      install: . ./install-jdk.sh -F 11 -L BCL
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
+script:
+  - echo PATH = ${PATH}
+  - echo JAVA_HOME = ${JAVA_HOME}
+  - java -version
 
  # cache between builds
 cache:
