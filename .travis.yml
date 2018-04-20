@@ -12,6 +12,10 @@ before_install:
 
 matrix:
   include:
+    - env: JDK='Oracle JDK 8 target 6' RXJAVA_TARGET=1.6
+      jdk: oraclejdk8
+    - env: JDK='Oracle JDK 8 target 8' RXJAVA_TARGET=1.8
+      jdk: oraclejdk8
     - env: JDK='Oracle JDK 9 target 6' RXJAVA_TARGET=1.6
       jdk: oraclejdk9
     - env: JDK='Oracle JDK 9 target 8' RXJAVA_TARGET=1.8
