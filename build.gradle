@@ -7,7 +7,7 @@ buildscript {
     }
   }
   dependencies {
-    classpath "ru.vyarus:gradle-animalsniffer-plugin:1.4.3"
+    classpath "ru.vyarus:gradle-animalsniffer-plugin:1.2.0"
     classpath "gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.13.1"
     classpath "me.champeau.gradle:jmh-gradle-plugin:0.4.4"
     classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3"
@@ -54,7 +54,7 @@ if (targetStr == null || targetStr.isEmpty()) {
     System.out.println("Source compatibility: " + targetStr)
 }
 sourceCompatibility = targetStr
-targetCompatibility = "1.6" //targetStr
+targetCompatibility = targetStr
 
 // Dependency versions
 // ---------------------------------------
