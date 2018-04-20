@@ -48,7 +48,7 @@ apply plugin: "eclipse"
 
 String targetStr = System.getenv("RXJAVA_TARGET")
 if (targetStr == null || targetStr.isEmpty()) {
-    targetStr = '1.9'
+    targetStr = '1.8'
     System.out.println("RXJAVA_TARGET env not found, using default " + targetStr)
 } else {
     System.out.println("Source compatibility: " + targetStr)
