@@ -54,7 +54,7 @@ if (targetStr == null || targetStr.isEmpty()) {
     System.out.println("Source compatibility: " + targetStr)
 }
 sourceCompatibility = targetStr
-targetCompatibility = targetStr
+targetCompatibility = "1.6" //targetStr
 
 // Dependency versions
 // ---------------------------------------
