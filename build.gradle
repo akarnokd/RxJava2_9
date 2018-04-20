@@ -45,8 +45,16 @@ apply plugin: "com.jfrog.bintray"
 apply plugin: "com.jfrog.artifactory"
 apply plugin: "eclipse"
 
-sourceCompatibility = JavaVersion.VERSION_1_6
-targetCompatibility = JavaVersion.VERSION_1_6
+
+String targetStr = System.getenv("RXJAVA_TARGET")
+if (targetStr == null || targetStr.isEmpty()) {
+    targetStr = '1.9'
+    System.out.println("RXJAVA_TARGET env not found, using default " + targetStr)
+} else {
+    System.out.println("Source compatibility: " + targetStr)
+}
+sourceCompatibility = targetStr
+targetCompatibility = targetStr
 
 // Dependency versions
 // ---------------------------------------
@@ -54,7 +62,7 @@ targetCompatibility = JavaVersion.VERSION_1_6
 def junitVersion = "4.12"
 def reactiveStreamsVersion = "1.0.2"
 def mockitoVersion = "2.1.0"
-def jmhLibVersion = "1.19"
+def jmhLibVersion = "1.20"
 def testNgVersion = "6.11"
 def guavaVersion = "24.0-jre"
 // --------------------------------------
