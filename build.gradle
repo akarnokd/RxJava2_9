@@ -49,7 +49,7 @@ targetCompatibility = targetStr
 // use animal sniffer only with target 6 or 7
 // javac 9+ may generate Java 7+ API calls on its own
 def sniff = "1.6".equals(targetStr) || "1.7".equals(targetStr)
-if (sniff) {
+if (!sniff) {
     println("AnimalSniffer can't be used due to target version " + targetStr)
 }
 
