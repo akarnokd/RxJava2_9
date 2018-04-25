@@ -34,9 +34,27 @@ if (releaseTag != null && !releaseTag.isEmpty()) {
 description = "RxJava: Reactive Extensions for the JVM – a library for composing asynchronous and event-based programs using observable sequences for the Java VM."
 
 apply plugin: "java-library"
+
+String targetStr = System.getenv("RXJAVA_TARGET")
+if (targetStr == null || targetStr.isEmpty()) {
+    targetStr = '1.9'
+    System.out.println("RXJAVA_TARGET env not found, using default " + targetStr)
+} else {
+    System.out.println("Source compatibility: " + targetStr)
+}
+
+sourceCompatibility = targetStr
+targetCompatibility = targetStr
+
+// use animal sniffer only with target 6 or 7
+// javac 9+ may generate Java 7+ API calls on its own
+def sniff = "1.6".equals(targetStr) || "1.7".equals(targetStr)
+if (sniff) {
+    println("AnimalSniffer can't be used due to target version " + targetStr)
+}
+
 apply plugin: "checkstyle"
 apply plugin: "jacoco"
-apply plugin: "ru.vyarus.animalsniffer"
 apply plugin: "maven"
 apply plugin: "osgi"
 apply plugin: "me.champeau.gradle.jmh"
@@ -44,17 +62,9 @@ apply plugin: "com.github.hierynomus.license"
 apply plugin: "com.jfrog.bintray"
 apply plugin: "com.jfrog.artifactory"
 apply plugin: "eclipse"
-
-
-String targetStr = System.getenv("RXJAVA_TARGET")
-if (targetStr == null || targetStr.isEmpty()) {
-    targetStr = '1.8'
-    System.out.println("RXJAVA_TARGET env not found, using default " + targetStr)
-} else {
-    System.out.println("Source compatibility: " + targetStr)
+if (sniff) {
+    apply plugin: "ru.vyarus.animalsniffer"
 }
-sourceCompatibility = targetStr
-targetCompatibility = targetStr
 
 // Dependency versions
 // ---------------------------------------
@@ -72,7 +82,9 @@ repositories {
 }
 
 dependencies {
-    signature "org.codehaus.mojo.signature:java16:1.1@signature"
+    if (sniff) {
+        signature "org.codehaus.mojo.signature:java16:1.1@signature"
+    }
 
     api "org.reactivestreams:reactive-streams:$reactiveStreamsVersion"
     jmh "org.reactivestreams:reactive-streams:$reactiveStreamsVersion"
@@ -110,8 +122,10 @@ javadoc {
     }
 }
 
-animalsniffer {
-    annotation = "io.reactivex.internal.util.SuppressAnimalSniffer"
+if (sniff) {
+    animalsniffer {
+        annotation = "io.reactivex.internal.util.SuppressAnimalSniffer"
+    }
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
