@@ -74,7 +74,7 @@ import io.reactivex.schedulers.*;
  *         &#64;Override public void onStart() {
  *             System.out.println("Start!");
  *         }
- *         &#64;Override public void onNext(Integer t) {
+ *         &#64;Override public void onNext(String t) {
  *             System.out.println(t);
  *         }
  *         &#64;Override public void onError(Throwable t) {
@@ -5314,11 +5314,18 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Runs the source observable to a terminal event, ignoring any values and rethrowing any exception.
      * <p>
      * <img width="640" height="270" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/blockingSubscribe.o.0.png" alt="">
+     * <p>
+     * Note that calling this method will block the caller thread until the upstream terminates
+     * normally or with an error. Therefore, calling this method from special threads such as the
+     * Android Main Thread or the Swing Event Dispatch Thread is not recommended.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code blockingSubscribe} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
      * @since 2.0
+     * @see #blockingSubscribe(Consumer)
+     * @see #blockingSubscribe(Consumer, Consumer)
+     * @see #blockingSubscribe(Consumer, Consumer, Action)
      */
     @SchedulerSupport(SchedulerSupport.NONE)
     public final void blockingSubscribe() {
@@ -5330,15 +5337,23 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <p>
      * <img width="640" height="393" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/blockingSubscribe.o.1.png" alt="">
      * <p>
-     * If the Observable emits an error, it is wrapped into an
+     * If the {@code Observable} emits an error, it is wrapped into an
      * {@link io.reactivex.exceptions.OnErrorNotImplementedException OnErrorNotImplementedException}
      * and routed to the RxJavaPlugins.onError handler.
+     * Using the overloads {@link #blockingSubscribe(Consumer, Consumer)}
+     * or {@link #blockingSubscribe(Consumer, Consumer, Action)} instead is recommended.
+     * <p>
+     * Note that calling this method will block the caller thread until the upstream terminates
+     * normally or with an error. Therefore, calling this method from special threads such as the
+     * Android Main Thread or the Swing Event Dispatch Thread is not recommended.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code blockingSubscribe} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
      * @param onNext the callback action for each source value
      * @since 2.0
+     * @see #blockingSubscribe(Consumer, Consumer)
+     * @see #blockingSubscribe(Consumer, Consumer, Action)
      */
     @SchedulerSupport(SchedulerSupport.NONE)
     public final void blockingSubscribe(Consumer<? super T> onNext) {
@@ -5349,6 +5364,10 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Subscribes to the source and calls the given callbacks <strong>on the current thread</strong>.
      * <p>
      * <img width="640" height="396" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/blockingSubscribe.o.2.png" alt="">
+     * <p>
+     * Note that calling this method will block the caller thread until the upstream terminates
+     * normally or with an error. Therefore, calling this method from special threads such as the
+     * Android Main Thread or the Swing Event Dispatch Thread is not recommended.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code blockingSubscribe} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -5356,6 +5375,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * @param onNext the callback action for each source value
      * @param onError the callback action for an error event
      * @since 2.0
+     * @see #blockingSubscribe(Consumer, Consumer, Action)
      */
     @SchedulerSupport(SchedulerSupport.NONE)
     public final void blockingSubscribe(Consumer<? super T> onNext, Consumer<? super Throwable> onError) {
@@ -5367,6 +5387,10 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Subscribes to the source and calls the given callbacks <strong>on the current thread</strong>.
      * <p>
      * <img width="640" height="394" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/blockingSubscribe.o.png" alt="">
+     * <p>
+     * Note that calling this method will block the caller thread until the upstream terminates
+     * normally or with an error. Therefore, calling this method from special threads such as the
+     * Android Main Thread or the Swing Event Dispatch Thread is not recommended.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code blockingSubscribe} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -5382,18 +5406,24 @@ public abstract class Observable<T> implements ObservableSource<T> {
     }
 
     /**
-     * Subscribes to the source and calls the Observer methods <strong>on the current thread</strong>.
+     * Subscribes to the source and calls the {@link Observer} methods <strong>on the current thread</strong>.
+     * <p>
+     * Note that calling this method will block the caller thread until the upstream terminates
+     * normally, with an error or the {@code Observer} disposes the {@link Disposable} it receives via
+     * {@link Observer#onSubscribe(Disposable)}.
+     * Therefore, calling this method from special threads such as the
+     * Android Main Thread or the Swing Event Dispatch Thread is not recommended.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code blockingSubscribe} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
      * The a dispose() call is composed through.
-     * @param subscriber the subscriber to forward events and calls to in the current thread
+     * @param observer the {@code Observer} instance to forward events and calls to in the current thread
      * @since 2.0
      */
     @SchedulerSupport(SchedulerSupport.NONE)
-    public final void blockingSubscribe(Observer<? super T> subscriber) {
-        ObservableBlockingSubscribe.subscribe(this, subscriber);
+    public final void blockingSubscribe(Observer<? super T> observer) {
+        ObservableBlockingSubscribe.subscribe(this, observer);
     }
 
     /**
@@ -9386,7 +9416,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * 
      * public final class CustomObserver&lt;T&gt; implements Observer&lt;T&gt;, Disposable {
      *
-     *     // The donstream's Observer that will receive the onXXX events
+     *     // The downstream's Observer that will receive the onXXX events
      *     final Observer&lt;? super String&gt; downstream;
      *
      *     // The connection to the upstream source that will call this class' onXXX methods
@@ -12039,9 +12069,10 @@ public abstract class Observable<T> implements ObservableSource<T> {
 
     /**
      * Operator implementations (both source and intermediate) should implement this method that
-     * performs the necessary business logic.
-     * <p>There is no need to call any of the plugin hooks on the current Observable instance or
-     * the Subscriber.
+     * performs the necessary business logic and handles the incoming {@link Observer}s.
+     * <p>There is no need to call any of the plugin hooks on the current {@code Observable} instance or
+     * the {@code Observer}; all hooks and basic safeguards have been
+     * applied by {@link #subscribe(Observer)} before this method gets called.
      * @param observer the incoming Observer, never null
      */
     protected abstract void subscribeActual(Observer<? super T> observer);
@@ -12250,7 +12281,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      *  <dd>Errors of this {@code Observable} and all the {@code CompletableSource}s, who had the chance
      *  to run to their completion, are delayed until
      *  all of them terminate in some fashion. At this point, if there was only one failure, the respective
-     *  {@code Throwable} is emitted to the dowstream. It there were more than one failures, the
+     *  {@code Throwable} is emitted to the downstream. It there were more than one failures, the
      *  operator combines all {@code Throwable}s into a {@link io.reactivex.exceptions.CompositeException CompositeException}
      *  and signals that to the downstream.
      *  If any inactivated (switched out) {@code CompletableSource}

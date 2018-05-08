@@ -49,7 +49,7 @@ import io.reactivex.schedulers.Schedulers;
 public abstract class Maybe<T> implements MaybeSource<T> {
 
     /**
-     * Runs multiple Maybe sources and signals the events of the first one that signals (cancelling
+     * Runs multiple MaybeSources and signals the events of the first one that signals (cancelling
      * the rest).
      * <dl>
      * <dt><b>Scheduler:</b></dt>
@@ -68,7 +68,7 @@ public abstract class Maybe<T> implements MaybeSource<T> {
     }
 
     /**
-     * Runs multiple Maybe sources and signals the events of the first one that signals (cancelling
+     * Runs multiple MaybeSources and signals the events of the first one that signals (cancelling
      * the rest).
      * <dl>
      * <dt><b>Scheduler:</b></dt>
@@ -412,7 +412,7 @@ public abstract class Maybe<T> implements MaybeSource<T> {
     }
 
     /**
-     * Concatenates a Publisher sequence of Publishers eagerly into a single stream of values.
+     * Concatenates a Publisher sequence of MaybeSources eagerly into a single stream of values.
      * <p>
      * Eager concatenation means that once a subscriber subscribes, this operator subscribes to all of the
      * emitted source Publishers as they are observed. The operator buffers the values emitted by these
@@ -2978,7 +2978,7 @@ public abstract class Maybe<T> implements MaybeSource<T> {
      *
      * @param <R> the result value type
      * @param mapper
-     *            a function that, when applied to the item emitted by the source Maybe, returns an
+     *            a function that, when applied to the item emitted by the source Maybe, returns a
      *            Flowable
      * @return the Flowable returned from {@code func} when applied to the item emitted by the source Maybe
      * @see <a href="http://reactivex.io/documentation/operators/flatmap.html">ReactiveX operators documentation: FlatMap</a>
@@ -3139,7 +3139,7 @@ public abstract class Maybe<T> implements MaybeSource<T> {
      * 
      * public final class CustomMaybeObserver&lt;T&gt; implements MaybeObserver&lt;T&gt;, Disposable {
      *
-     *     // The donstream's MaybeObserver that will receive the onXXX events
+     *     // The downstream's MaybeObserver that will receive the onXXX events
      *     final MaybeObserver&lt;? super String&gt; downstream;
      *
      *     // The connection to the upstream source that will call this class' onXXX methods
@@ -3503,7 +3503,7 @@ public abstract class Maybe<T> implements MaybeSource<T> {
     }
 
     /**
-     * Instructs a Maybe to pass control to another MaybeSource rather than invoking
+     * Instructs a Maybe to pass control to another {@link MaybeSource} rather than invoking
      * {@link MaybeObserver#onError onError} if it encounters an error.
      * <p>
      * <img width="640" height="310" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/onErrorResumeNext.png" alt="">
@@ -3516,7 +3516,7 @@ public abstract class Maybe<T> implements MaybeSource<T> {
      * </dl>
      *
      * @param next
-     *            the next Maybe source that will take over if the source Maybe encounters
+     *            the next {@code MaybeSource} that will take over if the source Maybe encounters
      *            an error
      * @return the new Maybe instance
      * @see <a href="http://reactivex.io/documentation/operators/catch.html">ReactiveX operators documentation: Catch</a>
@@ -4082,7 +4082,10 @@ public abstract class Maybe<T> implements MaybeSource<T> {
     }
 
     /**
-     * Override this method in subclasses to handle the incoming MaybeObservers.
+     * Implement this method in subclasses to handle the incoming {@link MaybeObserver}s.
+     * <p>There is no need to call any of the plugin hooks on the current {@code Maybe} instance or
+     * the {@code MaybeObserver}; all hooks and basic safeguards have been
+     * applied by {@link #subscribe(MaybeObserver)} before this method gets called.
      * @param observer the MaybeObserver to handle, not null
      */
     protected abstract void subscribeActual(MaybeObserver<? super T> observer);
@@ -4348,14 +4351,14 @@ public abstract class Maybe<T> implements MaybeSource<T> {
     }
 
     /**
-     * If this Maybe source didn't signal an event before the timeoutIndicator MaybeSource signals, a
-     * TimeoutException is signalled instead.
+     * If the current {@code Maybe} didn't signal an event before the {@code timeoutIndicator} {@link MaybeSource} signals, a
+     * {@link TimeoutException} is signaled instead.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code timeout} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
      * @param <U> the value type of the
-     * @param timeoutIndicator the MaybeSource that indicates the timeout by signalling onSuccess
+     * @param timeoutIndicator the {@code MaybeSource} that indicates the timeout by signaling onSuccess
      * or onComplete.
      * @return the new Maybe instance
      */
@@ -4367,17 +4370,17 @@ public abstract class Maybe<T> implements MaybeSource<T> {
     }
 
     /**
-     * If the current Maybe source didn't signal an event before the timeoutIndicator MaybeSource signals,
-     * the current Maybe is cancelled and the {@code fallback} MaybeSource subscribed to
+     * If the current {@code Maybe} didn't signal an event before the {@code timeoutIndicator} {@link MaybeSource} signals,
+     * the current {@code Maybe} is cancelled and the {@code fallback} {@code MaybeSource} subscribed to
      * as a continuation.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code timeout} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
      * @param <U> the value type of the
-     * @param timeoutIndicator the MaybeSource that indicates the timeout by signalling onSuccess
-     * or onComplete.
-     * @param fallback the MaybeSource that is subscribed to if the current Maybe times out
+     * @param timeoutIndicator the {@code MaybeSource} that indicates the timeout by signaling {@code onSuccess}
+     * or {@code onComplete}.
+     * @param fallback the {@code MaybeSource} that is subscribed to if the current {@code Maybe} times out
      * @return the new Maybe instance
      */
     @CheckReturnValue
@@ -4389,8 +4392,8 @@ public abstract class Maybe<T> implements MaybeSource<T> {
     }
 
     /**
-     * If this Maybe source didn't signal an event before the timeoutIndicator Publisher signals, a
-     * TimeoutException is signalled instead.
+     * If the current {@code Maybe} source didn't signal an event before the {@code timeoutIndicator} {@link Publisher} signals, a
+     * {@link TimeoutException} is signaled instead.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The {@code timeoutIndicator} {@link Publisher} is consumed in an unbounded manner and
@@ -4399,8 +4402,8 @@ public abstract class Maybe<T> implements MaybeSource<T> {
      *  <dd>{@code timeout} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
      * @param <U> the value type of the
-     * @param timeoutIndicator the MaybeSource that indicates the timeout by signalling onSuccess
-     * or onComplete.
+     * @param timeoutIndicator the {@code MaybeSource} that indicates the timeout by signaling {@code onSuccess}
+     * or {@code onComplete}.
      * @return the new Maybe instance
      */
     @BackpressureSupport(BackpressureKind.UNBOUNDED_IN)
@@ -4412,8 +4415,8 @@ public abstract class Maybe<T> implements MaybeSource<T> {
     }
 
     /**
-     * If the current Maybe source didn't signal an event before the timeoutIndicator Publisher signals,
-     * the current Maybe is cancelled and the {@code fallback} MaybeSource subscribed to
+     * If the current {@code Maybe} didn't signal an event before the {@code timeoutIndicator} {@link Publisher} signals,
+     * the current {@code Maybe} is cancelled and the {@code fallback} {@code MaybeSource} subscribed to
      * as a continuation.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
@@ -4423,9 +4426,9 @@ public abstract class Maybe<T> implements MaybeSource<T> {
      *  <dd>{@code timeout} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
      * @param <U> the value type of the
-     * @param timeoutIndicator the MaybeSource that indicates the timeout by signalling onSuccess
-     * or onComplete
-     * @param fallback the MaybeSource that is subscribed to if the current Maybe times out
+     * @param timeoutIndicator the {@code MaybeSource} that indicates the timeout by signaling {@code onSuccess}
+     * or {@code onComplete}
+     * @param fallback the {@code MaybeSource} that is subscribed to if the current {@code Maybe} times out
      * @return the new Maybe instance
      */
     @BackpressureSupport(BackpressureKind.UNBOUNDED_IN)

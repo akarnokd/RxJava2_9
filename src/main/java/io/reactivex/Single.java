@@ -60,7 +60,7 @@ import io.reactivex.schedulers.Schedulers;
 public abstract class Single<T> implements SingleSource<T> {
 
     /**
-     * Runs multiple Single sources and signals the events of the first one that signals (cancelling
+     * Runs multiple SingleSources and signals the events of the first one that signals (cancelling
      * the rest).
      * <dl>
      * <dt><b>Scheduler:</b></dt>
@@ -80,7 +80,7 @@ public abstract class Single<T> implements SingleSource<T> {
     }
 
     /**
-     * Runs multiple Single sources and signals the events of the first one that signals (cancelling
+     * Runs multiple SingleSources and signals the events of the first one that signals (cancelling
      * the rest).
      * <dl>
      * <dt><b>Scheduler:</b></dt>
@@ -106,7 +106,7 @@ public abstract class Single<T> implements SingleSource<T> {
     }
 
     /**
-     * Concatenate the single values, in a non-overlapping fashion, of the Single sources provided by
+     * Concatenate the single values, in a non-overlapping fashion, of the SingleSources provided by
      * an Iterable sequence.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
@@ -127,7 +127,7 @@ public abstract class Single<T> implements SingleSource<T> {
     }
 
     /**
-     * Concatenate the single values, in a non-overlapping fashion, of the Single sources provided by
+     * Concatenate the single values, in a non-overlapping fashion, of the SingleSources provided by
      * an Observable sequence.
      * <dl>
      * <dt><b>Scheduler:</b></dt>
@@ -147,7 +147,7 @@ public abstract class Single<T> implements SingleSource<T> {
     }
 
     /**
-     * Concatenate the single values, in a non-overlapping fashion, of the Single sources provided by
+     * Concatenate the single values, in a non-overlapping fashion, of the SingleSources provided by
      * a Publisher sequence.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
@@ -169,7 +169,7 @@ public abstract class Single<T> implements SingleSource<T> {
     }
 
     /**
-     * Concatenate the single values, in a non-overlapping fashion, of the Single sources provided by
+     * Concatenate the single values, in a non-overlapping fashion, of the SingleSources provided by
      * a Publisher sequence and prefetched by the specified amount.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
@@ -299,7 +299,7 @@ public abstract class Single<T> implements SingleSource<T> {
     }
 
     /**
-     * Concatenate the single values, in a non-overlapping fashion, of the Single sources provided in
+     * Concatenate the single values, in a non-overlapping fashion, of the SingleSources provided in
      * an array.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
@@ -318,6 +318,77 @@ public abstract class Single<T> implements SingleSource<T> {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public static <T> Flowable<T> concatArray(SingleSource<? extends T>... sources) {
         return RxJavaPlugins.onAssembly(new FlowableConcatMap(Flowable.fromArray(sources), SingleInternalHelper.toFlowable(), 2, ErrorMode.BOUNDARY));
+    }
+
+    /**
+     * Concatenates a sequence of SingleSource eagerly into a single stream of values.
+     * <p>
+     * Eager concatenation means that once a subscriber subscribes, this operator subscribes to all of the
+     * source SingleSources. The operator buffers the value emitted by these SingleSources and then drains them
+     * in order, each one after the previous one completes.
+     * <dl>
+     *  <dt><b>Backpressure:</b></dt>
+     *  <dd>The operator honors backpressure from downstream.</dd>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>This method does not operate by default on a particular {@link Scheduler}.</dd>
+     * </dl>
+     * @param <T> the value type
+     * @param sources a sequence of Single that need to be eagerly concatenated
+     * @return the new Flowable instance with the specified concatenation behavior
+     */
+    @BackpressureSupport(BackpressureKind.FULL)
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.NONE)
+    public static <T> Flowable<T> concatArrayEager(SingleSource<? extends T>... sources) {
+        return Flowable.fromArray(sources).concatMapEager(SingleInternalHelper.<T>toFlowable());
+    }
+
+    /**
+     * Concatenates a Publisher sequence of SingleSources eagerly into a single stream of values.
+     * <p>
+     * Eager concatenation means that once a subscriber subscribes, this operator subscribes to all of the
+     * emitted source Publishers as they are observed. The operator buffers the values emitted by these
+     * Publishers and then drains them in order, each one after the previous one completes.
+     * <dl>
+     *  <dt><b>Backpressure:</b></dt>
+     *  <dd>Backpressure is honored towards the downstream and the outer Publisher is
+     *  expected to support backpressure. Violating this assumption, the operator will
+     *  signal {@link io.reactivex.exceptions.MissingBackpressureException}.</dd>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>This method does not operate by default on a particular {@link Scheduler}.</dd>
+     * </dl>
+     * @param <T> the value type
+     * @param sources a sequence of Publishers that need to be eagerly concatenated
+     * @return the new Publisher instance with the specified concatenation behavior
+     */
+    @BackpressureSupport(BackpressureKind.FULL)
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.NONE)
+    public static <T> Flowable<T> concatEager(Publisher<? extends SingleSource<? extends T>> sources) {
+        return Flowable.fromPublisher(sources).concatMapEager(SingleInternalHelper.<T>toFlowable());
+    }
+
+    /**
+     * Concatenates a sequence of SingleSources eagerly into a single stream of values.
+     * <p>
+     * Eager concatenation means that once a subscriber subscribes, this operator subscribes to all of the
+     * source SingleSources. The operator buffers the values emitted by these SingleSources and then drains them
+     * in order, each one after the previous one completes.
+     * <dl>
+     *  <dt><b>Backpressure:</b></dt>
+     *  <dd>Backpressure is honored towards the downstream.</dd>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>This method does not operate by default on a particular {@link Scheduler}.</dd>
+     * </dl>
+     * @param <T> the value type
+     * @param sources a sequence of SingleSource that need to be eagerly concatenated
+     * @return the new Flowable instance with the specified concatenation behavior
+     */
+    @BackpressureSupport(BackpressureKind.FULL)
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.NONE)
+    public static <T> Flowable<T> concatEager(Iterable<? extends SingleSource<? extends T>> sources) {
+        return Flowable.fromIterable(sources).concatMapEager(SingleInternalHelper.<T>toFlowable());
     }
 
     /**
@@ -362,14 +433,14 @@ public abstract class Single<T> implements SingleSource<T> {
     }
 
     /**
-     * Calls a Callable for each individual SingleObserver to return the actual Single source to
+     * Calls a {@link Callable} for each individual {@link SingleObserver} to return the actual {@link SingleSource} to
      * be subscribed to.
      * <dl>
      * <dt><b>Scheduler:</b></dt>
      * <dd>{@code defer} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
      * @param <T> the value type
-     * @param singleSupplier the Callable that is called for each individual SingleObserver and
+     * @param singleSupplier the {@code Callable} that is called for each individual {@code SingleObserver} and
      * returns a SingleSource instance to subscribe to
      * @return the new Single instance
      */
@@ -2173,6 +2244,9 @@ public abstract class Single<T> implements SingleSource<T> {
      * is executed once per subscription.
      * <p>Note that the {@code onFinally} action is shared between subscriptions and as such
      * should be thread-safe.
+     * <p>
+     * <img width="640" height="291" src="https://raw.githubusercontent.com/wiki/ReactiveX/RxJava/images/rx-operators/Single.doFinally.png" alt="">
+     * </p>
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code doFinally} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -2192,6 +2266,9 @@ public abstract class Single<T> implements SingleSource<T> {
     /**
      * Calls the shared consumer with the Disposable sent through the onSubscribe for each
      * SingleObserver that subscribes to the current Single.
+     * <p>
+     * <img width="640" height="347" src="https://raw.githubusercontent.com/wiki/ReactiveX/RxJava/images/rx-operators/Single.doOnSubscribe.png" alt="">
+     * </p>
      * <dl>
      * <dt><b>Scheduler:</b></dt>
      * <dd>{@code doOnSubscribe} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -2210,6 +2287,9 @@ public abstract class Single<T> implements SingleSource<T> {
     /**
      * Calls the shared consumer with the success value sent via onSuccess for each
      * SingleObserver that subscribes to the current Single.
+     * <p>
+     * <img width="640" height="347" src="https://raw.githubusercontent.com/wiki/ReactiveX/RxJava/images/rx-operators/Single.doOnSuccess.2.png" alt="">
+     * </p>
      * <dl>
      * <dt><b>Scheduler:</b></dt>
      * <dd>{@code doOnSuccess} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -2246,6 +2326,9 @@ public abstract class Single<T> implements SingleSource<T> {
     /**
      * Calls the shared consumer with the error sent via onError for each
      * SingleObserver that subscribes to the current Single.
+     * <p>
+     * <img width="640" height="349" src="https://raw.githubusercontent.com/wiki/ReactiveX/RxJava/images/rx-operators/Single.doOnError.2.png" alt="">
+     * </p>
      * <dl>
      * <dt><b>Scheduler:</b></dt>
      * <dd>{@code doOnError} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -2264,6 +2347,9 @@ public abstract class Single<T> implements SingleSource<T> {
     /**
      * Calls the shared {@code Action} if a SingleObserver subscribed to the current Single
      * disposes the common Disposable it received via onSubscribe.
+     * <p>
+     * <img width="640" height="332" src="https://raw.githubusercontent.com/wiki/ReactiveX/RxJava/images/rx-operators/Single.doOnDispose.png" alt="">
+     * </p>
      * <dl>
      * <dt><b>Scheduler:</b></dt>
      * <dd>{@code doOnDispose} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -2365,7 +2451,7 @@ public abstract class Single<T> implements SingleSource<T> {
      *
      * @param <R> the result value type
      * @param mapper
-     *            a function that, when applied to the item emitted by the source Single, returns an
+     *            a function that, when applied to the item emitted by the source Single, returns a
      *            Flowable
      * @return the Flowable returned from {@code func} when applied to the item emitted by the source Single
      * @see <a href="http://reactivex.io/documentation/operators/flatmap.html">ReactiveX operators documentation: FlatMap</a>
@@ -2517,7 +2603,7 @@ public abstract class Single<T> implements SingleSource<T> {
      * 
      * public final class CustomSingleObserver&lt;T&gt; implements SingleObserver&lt;T&gt;, Disposable {
      *
-     *     // The donstream's SingleObserver that will receive the onXXX events
+     *     // The downstream's SingleObserver that will receive the onXXX events
      *     final SingleObserver&lt;? super String&gt; downstream;
      *
      *     // The connection to the upstream source that will call this class' onXXX methods
@@ -3233,7 +3319,10 @@ public abstract class Single<T> implements SingleSource<T> {
     }
 
     /**
-     * Override this method in subclasses to handle the incoming SingleObservers.
+     * Implement this method in subclasses to handle the incoming {@link SingleObserver}s.
+     * <p>There is no need to call any of the plugin hooks on the current {@code Single} instance or
+     * the {@code SingleObserver}; all hooks and basic safeguards have been
+     * applied by {@link #subscribe(SingleObserver)} before this method gets called.
      * @param observer the SingleObserver to handle, not null
      */
     protected abstract void subscribeActual(@NonNull SingleObserver<? super T> observer);
@@ -3523,11 +3612,10 @@ public abstract class Single<T> implements SingleSource<T> {
      * @return a {@link Completable} that calls {@code onComplete} on it's observer when the source {@link Single}
      *         calls {@code onSuccess}.
      * @see <a href="http://reactivex.io/documentation/completable.html">ReactiveX documentation: Completable</a>
-     * @since 2.1.13 - experimental
+     * @since 2.1.13
      */
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
-    @Experimental
     public final Completable ignoreElement() {
         return RxJavaPlugins.onAssembly(new CompletableFromSingle<T>(this));
     }
