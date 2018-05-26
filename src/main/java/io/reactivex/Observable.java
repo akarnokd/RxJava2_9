@@ -1455,8 +1455,6 @@ public abstract class Observable<T> implements ObservableSource<T> {
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
     public static <T> Observable<T> concatEager(ObservableSource<? extends ObservableSource<? extends T>> sources, int maxConcurrency, int prefetch) {
-        ObjectHelper.requireNonNull(maxConcurrency, "maxConcurrency is null");
-        ObjectHelper.requireNonNull(prefetch, "prefetch is null");
         return wrap(sources).concatMapEager((Function)Functions.identity(), maxConcurrency, prefetch);
     }
 
@@ -1507,8 +1505,6 @@ public abstract class Observable<T> implements ObservableSource<T> {
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
     public static <T> Observable<T> concatEager(Iterable<? extends ObservableSource<? extends T>> sources, int maxConcurrency, int prefetch) {
-        ObjectHelper.requireNonNull(maxConcurrency, "maxConcurrency is null");
-        ObjectHelper.requireNonNull(prefetch, "prefetch is null");
         return fromIterable(sources).concatMapEagerDelayError((Function)Functions.identity(), maxConcurrency, prefetch, false);
     }
 
@@ -13053,6 +13049,134 @@ public abstract class Observable<T> implements ObservableSource<T> {
     @SchedulerSupport(SchedulerSupport.CUSTOM)
     public final Observable<T> throttleLast(long intervalDuration, TimeUnit unit, Scheduler scheduler) {
         return sample(intervalDuration, unit, scheduler);
+    }
+
+    /**
+     * Throttles items from the upstream {@code Observable} by first emitting the next
+     * item from upstream, then periodically emitting the latest item (if any) when
+     * the specified timeout elapses between them.
+     * <p>
+     * <img width="640" height="325" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/throttleLatest.png" alt="">
+     * <p>
+     * Unlike the option with {@link #throttleLatest(long, TimeUnit, boolean)}, the very last item being held back
+     * (if any) is not emitted when the upstream completes.
+     * <p>
+     * If no items were emitted from the upstream during this timeout phase, the next
+     * upstream item is emitted immediately and the timeout window starts from then.
+     * <dl>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>{@code throttleLatest} operates by default on the {@code computation} {@link Scheduler}.</dd>
+     * </dl>
+     * @param timeout the time to wait after an item emission towards the downstream
+     *                before trying to emit the latest item from upstream again
+     * @param unit    the time unit
+     * @return the new Observable instance
+     * @since 2.1.14 - experimental
+     * @see #throttleLatest(long, TimeUnit, boolean)
+     * @see #throttleLatest(long, TimeUnit, Scheduler)
+     */
+    @Experimental
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.COMPUTATION)
+    public final Observable<T> throttleLatest(long timeout, TimeUnit unit) {
+        return throttleLatest(timeout, unit, Schedulers.computation(), false);
+    }
+
+    /**
+     * Throttles items from the upstream {@code Observable} by first emitting the next
+     * item from upstream, then periodically emitting the latest item (if any) when
+     * the specified timeout elapses between them.
+     * <p>
+     * <img width="640" height="325" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/throttleLatest.e.png" alt="">
+     * <p>
+     * If no items were emitted from the upstream during this timeout phase, the next
+     * upstream item is emitted immediately and the timeout window starts from then.
+     * <dl>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>{@code throttleLatest} operates by default on the {@code computation} {@link Scheduler}.</dd>
+     * </dl>
+     * @param timeout the time to wait after an item emission towards the downstream
+     *                before trying to emit the latest item from upstream again
+     * @param unit    the time unit
+     * @param emitLast If {@code true}, the very last item from the upstream will be emitted
+     *                 immediately when the upstream completes, regardless if there is
+     *                 a timeout window active or not. If {@code false}, the very last
+     *                 upstream item is ignored and the flow terminates.
+     * @return the new Observable instance
+     * @since 2.1.14 - experimental
+     * @see #throttleLatest(long, TimeUnit, Scheduler, boolean)
+     */
+    @Experimental
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.COMPUTATION)
+    public final Observable<T> throttleLatest(long timeout, TimeUnit unit, boolean emitLast) {
+        return throttleLatest(timeout, unit, Schedulers.computation(), emitLast);
+    }
+
+    /**
+     * Throttles items from the upstream {@code Observable} by first emitting the next
+     * item from upstream, then periodically emitting the latest item (if any) when
+     * the specified timeout elapses between them.
+     * <p>
+     * <img width="640" height="325" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/throttleLatest.s.png" alt="">
+     * <p>
+     * Unlike the option with {@link #throttleLatest(long, TimeUnit, Scheduler, boolean)}, the very last item being held back
+     * (if any) is not emitted when the upstream completes.
+     * <p>
+     * If no items were emitted from the upstream during this timeout phase, the next
+     * upstream item is emitted immediately and the timeout window starts from then.
+     * <dl>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
+     * </dl>
+     * @param timeout the time to wait after an item emission towards the downstream
+     *                before trying to emit the latest item from upstream again
+     * @param unit    the time unit
+     * @param scheduler the {@link Scheduler} where the timed wait and latest item
+     *                  emission will be performed
+     * @return the new Observable instance
+     * @since 2.1.14 - experimental
+     * @see #throttleLatest(long, TimeUnit, Scheduler, boolean)
+     */
+    @Experimental
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.CUSTOM)
+    public final Observable<T> throttleLatest(long timeout, TimeUnit unit, Scheduler scheduler) {
+        return throttleLatest(timeout, unit, scheduler, false);
+    }
+
+    /**
+     * Throttles items from the upstream {@code Observable} by first emitting the next
+     * item from upstream, then periodically emitting the latest item (if any) when
+     * the specified timeout elapses between them.
+     * <p>
+     * <img width="640" height="325" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/throttleLatest.se.png" alt="">
+     * <p>
+     * If no items were emitted from the upstream during this timeout phase, the next
+     * upstream item is emitted immediately and the timeout window starts from then.
+     * <dl>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>You specify which {@link Scheduler} this operator will use.</dd>
+     * </dl>
+     * @param timeout the time to wait after an item emission towards the downstream
+     *                before trying to emit the latest item from upstream again
+     * @param unit    the time unit
+     * @param scheduler the {@link Scheduler} where the timed wait and latest item
+     *                  emission will be performed
+     * @param emitLast If {@code true}, the very last item from the upstream will be emitted
+     *                 immediately when the upstream completes, regardless if there is
+     *                 a timeout window active or not. If {@code false}, the very last
+     *                 upstream item is ignored and the flow terminates.
+     * @return the new Observable instance
+     * @since 2.1.14 - experimental
+     */
+    @Experimental
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.CUSTOM)
+    public final Observable<T> throttleLatest(long timeout, TimeUnit unit, Scheduler scheduler, boolean emitLast) {
+        ObjectHelper.requireNonNull(unit, "unit is null");
+        ObjectHelper.requireNonNull(scheduler, "scheduler is null");
+        return RxJavaPlugins.onAssembly(new ObservableThrottleLatest<T>(this, timeout, unit, scheduler, emitLast));
     }
 
     /**
