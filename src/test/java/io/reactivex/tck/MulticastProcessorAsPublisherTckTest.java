@@ -16,25 +16,26 @@ package io.reactivex.tck;
 import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;
 
-import io.reactivex.processors.BehaviorProcessor;
+import io.reactivex.processors.MulticastProcessor;
 import io.reactivex.schedulers.Schedulers;
 
 @Test
-public class BehaviorProcessorAsPublisherTckTest extends BaseTck<Integer> {
+public class MulticastProcessorAsPublisherTckTest extends BaseTck<Integer> {
 
-    public BehaviorProcessorAsPublisherTckTest() {
-        super(50);
+    public MulticastProcessorAsPublisherTckTest() {
+        super(100);
     }
 
     @Override
     public Publisher<Integer> createPublisher(final long elements) {
-        final BehaviorProcessor<Integer> pp = BehaviorProcessor.create();
+        final MulticastProcessor<Integer> mp = MulticastProcessor.create();
+        mp.start();
 
         Schedulers.io().scheduleDirect(new Runnable() {
             @Override
             public void run() {
                 long start = System.currentTimeMillis();
-                while (!pp.hasSubscribers()) {
+                while (!mp.hasSubscribers()) {
                     try {
                         Thread.sleep(1);
                     } catch (InterruptedException ex) {
@@ -47,16 +48,16 @@ public class BehaviorProcessorAsPublisherTckTest extends BaseTck<Integer> {
                 }
 
                 for (int i = 0; i < elements; i++) {
-                    while (!pp.offer(i)) {
+                    while (!mp.offer(i)) {
                         Thread.yield();
                         if (System.currentTimeMillis() - start > 1000) {
                             return;
                         }
                     }
                 }
-                pp.onComplete();
+                mp.onComplete();
             }
         });
-        return pp;
+        return mp;
     }
 }
