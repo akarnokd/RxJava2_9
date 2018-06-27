@@ -11,47 +11,55 @@
  * the License for the specific language governing permissions and limitations under the License.
  */
 
-package io.reactivex.internal.observers;
+package io.reactivex.internal.subscribers;
+
+import io.reactivex.FlowableSubscriber;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.exceptions.CompositeException;
+import io.reactivex.exceptions.Exceptions;
+import io.reactivex.functions.Action;
+import io.reactivex.functions.Consumer;
+import io.reactivex.internal.functions.Functions;
+import io.reactivex.internal.subscriptions.SubscriptionHelper;
+import io.reactivex.observers.LambdaConsumerIntrospection;
+import io.reactivex.plugins.RxJavaPlugins;
+import org.reactivestreams.Subscription;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.reactivex.Observer;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.exceptions.*;
-import io.reactivex.functions.*;
-import io.reactivex.internal.disposables.DisposableHelper;
-import io.reactivex.internal.functions.Functions;
-import io.reactivex.observers.LambdaConsumerIntrospection;
-import io.reactivex.plugins.RxJavaPlugins;
-
-public final class LambdaObserver<T> extends AtomicReference<Disposable>
-        implements Observer<T>, Disposable, LambdaConsumerIntrospection {
+public final class BoundedSubscriber<T> extends AtomicReference<Subscription>
+        implements FlowableSubscriber<T>, Subscription, Disposable, LambdaConsumerIntrospection {
 
     private static final long serialVersionUID = -7251123623727029452L;
     final Consumer<? super T> onNext;
     final Consumer<? super Throwable> onError;
     final Action onComplete;
-    final Consumer<? super Disposable> onSubscribe;
+    final Consumer<? super Subscription> onSubscribe;
 
-    public LambdaObserver(Consumer<? super T> onNext, Consumer<? super Throwable> onError,
-            Action onComplete,
-            Consumer<? super Disposable> onSubscribe) {
+    final int bufferSize;
+    int consumed;
+    final int limit;
+
+    public BoundedSubscriber(Consumer<? super T> onNext, Consumer<? super Throwable> onError,
+                            Action onComplete, Consumer<? super Subscription> onSubscribe, int bufferSize) {
         super();
         this.onNext = onNext;
         this.onError = onError;
         this.onComplete = onComplete;
         this.onSubscribe = onSubscribe;
+        this.bufferSize = bufferSize;
+        this.limit = bufferSize - (bufferSize >> 2);
     }
 
     @Override
-    public void onSubscribe(Disposable s) {
-        if (DisposableHelper.setOnce(this, s)) {
+    public void onSubscribe(Subscription s) {
+        if (SubscriptionHelper.setOnce(this, s)) {
             try {
                 onSubscribe.accept(this);
-            } catch (Throwable ex) {
-                Exceptions.throwIfFatal(ex);
-                s.dispose();
-                onError(ex);
+            } catch (Throwable e) {
+                Exceptions.throwIfFatal(e);
+                s.cancel();
+                onError(e);
             }
         }
     }
@@ -61,9 +69,17 @@ public final class LambdaObserver<T> extends AtomicReference<Disposable>
         if (!isDisposed()) {
             try {
                 onNext.accept(t);
+
+                int c = consumed + 1;
+                if (c == limit) {
+                    consumed = 0;
+                    get().request(limit);
+                } else {
+                    consumed = c;
+                }
             } catch (Throwable e) {
                 Exceptions.throwIfFatal(e);
-                get().dispose();
+                get().cancel();
                 onError(e);
             }
         }
@@ -71,8 +87,8 @@ public final class LambdaObserver<T> extends AtomicReference<Disposable>
 
     @Override
     public void onError(Throwable t) {
-        if (!isDisposed()) {
-            lazySet(DisposableHelper.DISPOSED);
+        if (get() != SubscriptionHelper.CANCELLED) {
+            lazySet(SubscriptionHelper.CANCELLED);
             try {
                 onError.accept(t);
             } catch (Throwable e) {
@@ -86,8 +102,8 @@ public final class LambdaObserver<T> extends AtomicReference<Disposable>
 
     @Override
     public void onComplete() {
-        if (!isDisposed()) {
-            lazySet(DisposableHelper.DISPOSED);
+        if (get() != SubscriptionHelper.CANCELLED) {
+            lazySet(SubscriptionHelper.CANCELLED);
             try {
                 onComplete.run();
             } catch (Throwable e) {
@@ -99,12 +115,22 @@ public final class LambdaObserver<T> extends AtomicReference<Disposable>
 
     @Override
     public void dispose() {
-        DisposableHelper.dispose(this);
+        cancel();
     }
 
     @Override
     public boolean isDisposed() {
-        return get() == DisposableHelper.DISPOSED;
+        return get() == SubscriptionHelper.CANCELLED;
+    }
+
+    @Override
+    public void request(long n) {
+        get().request(n);
+    }
+
+    @Override
+    public void cancel() {
+        SubscriptionHelper.cancel(this);
     }
 
     @Override

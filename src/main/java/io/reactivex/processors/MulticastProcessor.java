@@ -43,7 +43,7 @@ import io.reactivex.plugins.RxJavaPlugins;
  *      the given prefetch amount and no reference counting behavior.</li>
  * <li>{@link #create(boolean)}: create an empty {@code MulticastProcessor} with
  *      {@link io.reactivex.Flowable#bufferSize() Flowable.bufferSize()} prefetch amount
- *      and no reference counting behavior.</li>
+ *      and an optional reference counting behavior.</li>
  * <li>{@link #create(int, boolean)}: create an empty {@code MulticastProcessor} with
  *      the given prefetch amount and an optional reference counting behavior.</li>
  * </ul>
@@ -102,14 +102,14 @@ import io.reactivex.plugins.RxJavaPlugins;
  * <p>
  * Example:
  * <pre><code>
-    MulticastProcessor&lt;Integer> mp = Flowable.range(1, 10)
+    MulticastProcessor&lt;Integer&gt; mp = Flowable.range(1, 10)
     .subscribeWith(MulticastProcessor.create());
 
     mp.test().assertResult(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
     // --------------------
 
-    MulticastProcessor&lt;Integer> mp2 = MulticastProcessor.create(4);
+    MulticastProcessor&lt;Integer&gt; mp2 = MulticastProcessor.create(4);
     mp2.start();
 
     assertTrue(mp2.offer(1));
@@ -174,7 +174,7 @@ public final class MulticastProcessor<T> extends FlowableProcessor<T> {
 
     /**
      * Constructs a fresh instance with the default Flowable.bufferSize() prefetch
-     * amount and no refCount-behavior.
+     * amount and the optional refCount-behavior.
      * @param <T> the input and output value type
      * @param refCount if true and if all Subscribers have canceled, the upstream
      * is cancelled
