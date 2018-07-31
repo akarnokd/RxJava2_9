@@ -56,9 +56,12 @@ if (!sniff) {
 def runJacoco = false
 
 // Jacoco doesn't support Java 11+ and prevents testing
-if (!"11".equals(targetStr) && !"12".equals(targetStr)) {
+def jvmVer = System.getProperty("java.version");
+if (!jvmVer.startsWith("11") && !jvmVer.startsWith("12")) {
     runJacoco = true;
-    println("Jacoco enabled for version " + targetStr)
+    println("Jacoco enabled for runtime version " + jvmVer)
+} else {
+    println("Jacoco disabled for runtime version " + jvmVer)
 }
 
 apply plugin: "checkstyle"
