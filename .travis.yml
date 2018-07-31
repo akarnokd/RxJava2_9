@@ -41,15 +41,15 @@ matrix:
     - env: JDK='Oracle JDK 11 target 11' RXJAVA_TARGET=11
       install: . ./install-jdk.sh -F 11 -L BCL
     - env: JDK='Oracle JDK 12 target 8' RXJAVA_TARGET=1.8
-      install: . ./install-jdk.sh -F 12 -L BCL
+      install: . ./install-jdk.sh -F 12 -L GPL
     - env: JDK='Oracle JDK 12 target 9' RXJAVA_TARGET=1.9
-      install: . ./install-jdk.sh -F 12 -L BCL
+      install: . ./install-jdk.sh -F 12 -L GPL
     - env: JDK='Oracle JDK 12 target 10' RXJAVA_TARGET=10
-      install: . ./install-jdk.sh -F 12 -L BCL
+      install: . ./install-jdk.sh -F 12 -L GPL
     - env: JDK='Oracle JDK 12 target 11' RXJAVA_TARGET=11
-      install: . ./install-jdk.sh -F 12 -L BCL
+      install: . ./install-jdk.sh -F 12 -L GPL
     - env: JDK='Oracle JDK 12 target 12' RXJAVA_TARGET=12
-      install: . ./install-jdk.sh -F 12 -L BCL
+      install: . ./install-jdk.sh -F 12 -L GPL
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
