@@ -53,8 +53,17 @@ if (!sniff) {
     println("AnimalSniffer can't be used due to target version " + targetStr)
 }
 
+def runJacoco = false
+
+// Jacoco doesn't support Java 11+ and prevents testing
+if (!"11".equals("targetStr") && !"12".equals(targetStr)) {
+    runJacoco = true;
+}
+
 apply plugin: "checkstyle"
-apply plugin: "jacoco"
+if (runJacoco) {
+    apply plugin: "jacoco"
+}
 apply plugin: "maven"
 apply plugin: "osgi"
 apply plugin: "me.champeau.gradle.jmh"
@@ -276,10 +285,12 @@ task testng(type: Test) {
      }
 } 
 
-check.dependsOn testng 
+check.dependsOn testng
 
-jacoco {
-    toolVersion = "0.8.1" // See http://www.eclemma.org/jacoco/.
+if (runJacoco) {
+    jacoco {
+        toolVersion = "0.8.1" // See http://www.eclemma.org/jacoco/.
+    }
 }
 
 task GCandMem(dependsOn: "check") doLast {
@@ -302,23 +313,25 @@ task GCandMem2(dependsOn: "test") doLast {
 
 testng.dependsOn GCandMem2
 
-jacocoTestReport {
-    reports {
-        xml.enabled = true
-        html.enabled = true
+if (runJacoco) {
+    jacocoTestReport {
+        reports {
+            xml.enabled = true
+            html.enabled = true
+        }
+
+        afterEvaluate {
+            classDirectories = files(classDirectories.files.collect {
+                fileTree(dir: it,
+                        exclude: ["io/reactivex/tck/**"])
+            })
+        }
     }
-    
-    afterEvaluate {
-        classDirectories = files(classDirectories.files.collect {
-            fileTree(dir: it,
-                    exclude: ["io/reactivex/tck/**"])
-        })
-    }
+
+    jacocoTestReport.dependsOn GCandMem
+
+    build.dependsOn jacocoTestReport
 }
-
-jacocoTestReport.dependsOn GCandMem
-
-build.dependsOn jacocoTestReport
 
 checkstyle {
     configFile file("checkstyle.xml")
