@@ -708,12 +708,12 @@ public class RxJavaPluginsTest {
         try {
             RxJavaPlugins.setOnFlowableSubscribe(new BiFunction<Flowable, Subscriber, Subscriber>() {
                 @Override
-                public Subscriber apply(Flowable o, final Subscriber t) {
+                public Subscriber apply(Flowable f, final Subscriber t) {
                     return new Subscriber() {
 
                         @Override
-                        public void onSubscribe(Subscription d) {
-                            t.onSubscribe(d);
+                        public void onSubscribe(Subscription s) {
+                            t.onSubscribe(s);
                         }
 
                         @SuppressWarnings("unchecked")

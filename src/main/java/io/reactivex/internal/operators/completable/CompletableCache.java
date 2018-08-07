@@ -44,9 +44,9 @@ public final class CompletableCache extends Completable implements CompletableOb
     }
 
     @Override
-    protected void subscribeActual(CompletableObserver s) {
-        InnerCompletableCache inner = new InnerCompletableCache(s);
-        s.onSubscribe(inner);
+    protected void subscribeActual(CompletableObserver observer) {
+        InnerCompletableCache inner = new InnerCompletableCache(observer);
+        observer.onSubscribe(inner);
 
         if (add(inner)) {
             if (inner.isDisposed()) {
@@ -59,9 +59,9 @@ public final class CompletableCache extends Completable implements CompletableOb
         } else {
             Throwable ex = error;
             if (ex != null) {
-                s.onError(ex);
+                observer.onError(ex);
             } else {
-                s.onComplete();
+                observer.onComplete();
             }
         }
     }
@@ -76,7 +76,7 @@ public final class CompletableCache extends Completable implements CompletableOb
         error = e;
         for (InnerCompletableCache inner : observers.getAndSet(TERMINATED)) {
             if (!inner.get()) {
-                inner.actual.onError(e);
+                inner.downstream.onError(e);
             }
         }
     }
@@ -85,7 +85,7 @@ public final class CompletableCache extends Completable implements CompletableOb
     public void onComplete() {
         for (InnerCompletableCache inner : observers.getAndSet(TERMINATED)) {
             if (!inner.get()) {
-                inner.actual.onComplete();
+                inner.downstream.onComplete();
             }
         }
     }
@@ -149,10 +149,10 @@ public final class CompletableCache extends Completable implements CompletableOb
 
         private static final long serialVersionUID = 8943152917179642732L;
 
-        final CompletableObserver actual;
+        final CompletableObserver downstream;
 
-        InnerCompletableCache(CompletableObserver actual) {
-            this.actual = actual;
+        InnerCompletableCache(CompletableObserver downstream) {
+            this.downstream = downstream;
         }
 
         @Override

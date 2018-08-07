@@ -54,9 +54,9 @@ public final class ObservableConcatMapCompletable<T> extends Completable {
     }
 
     @Override
-    protected void subscribeActual(CompletableObserver s) {
-        if (!ScalarXMapZHelper.tryAsCompletable(source, mapper, s)) {
-            source.subscribe(new ConcatMapCompletableObserver<T>(s, mapper, errorMode, prefetch));
+    protected void subscribeActual(CompletableObserver observer) {
+        if (!ScalarXMapZHelper.tryAsCompletable(source, mapper, observer)) {
+            source.subscribe(new ConcatMapCompletableObserver<T>(observer, mapper, errorMode, prefetch));
         }
     }
 
@@ -100,12 +100,12 @@ public final class ObservableConcatMapCompletable<T> extends Completable {
         }
 
         @Override
-        public void onSubscribe(Disposable s) {
-            if (DisposableHelper.validate(upstream, s)) {
-                this.upstream = s;
-                if (s instanceof QueueDisposable) {
+        public void onSubscribe(Disposable d) {
+            if (DisposableHelper.validate(upstream, d)) {
+                this.upstream = d;
+                if (d instanceof QueueDisposable) {
                     @SuppressWarnings("unchecked")
-                    QueueDisposable<T> qd = (QueueDisposable<T>) s;
+                    QueueDisposable<T> qd = (QueueDisposable<T>) d;
 
                     int m = qd.requestFusion(QueueDisposable.ANY);
                     if (m == QueueDisposable.SYNC) {

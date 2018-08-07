@@ -38,35 +38,35 @@ public final class SingleDoAfterSuccess<T> extends Single<T> {
     }
 
     @Override
-    protected void subscribeActual(SingleObserver<? super T> s) {
-        source.subscribe(new DoAfterObserver<T>(s, onAfterSuccess));
+    protected void subscribeActual(SingleObserver<? super T> observer) {
+        source.subscribe(new DoAfterObserver<T>(observer, onAfterSuccess));
     }
 
     static final class DoAfterObserver<T> implements SingleObserver<T>, Disposable {
 
-        final SingleObserver<? super T> actual;
+        final SingleObserver<? super T> downstream;
 
         final Consumer<? super T> onAfterSuccess;
 
-        Disposable d;
+        Disposable upstream;
 
         DoAfterObserver(SingleObserver<? super T> actual, Consumer<? super T> onAfterSuccess) {
-            this.actual = actual;
+            this.downstream = actual;
             this.onAfterSuccess = onAfterSuccess;
         }
 
         @Override
         public void onSubscribe(Disposable d) {
-            if (DisposableHelper.validate(this.d, d)) {
-                this.d = d;
+            if (DisposableHelper.validate(this.upstream, d)) {
+                this.upstream = d;
 
-                actual.onSubscribe(this);
+                downstream.onSubscribe(this);
             }
         }
 
         @Override
         public void onSuccess(T t) {
-            actual.onSuccess(t);
+            downstream.onSuccess(t);
 
             try {
                 onAfterSuccess.accept(t);
@@ -79,17 +79,17 @@ public final class SingleDoAfterSuccess<T> extends Single<T> {
 
         @Override
         public void onError(Throwable e) {
-            actual.onError(e);
+            downstream.onError(e);
         }
 
         @Override
         public void dispose() {
-            d.dispose();
+            upstream.dispose();
         }
 
         @Override
         public boolean isDisposed() {
-            return d.isDisposed();
+            return upstream.isDisposed();
         }
     }
 }

@@ -1301,7 +1301,7 @@ public class ObservableNullTests {
     public void doOnLifecycleOnDisposeNull() {
         just1.doOnLifecycle(new Consumer<Disposable>() {
             @Override
-            public void accept(Disposable s) { }
+            public void accept(Disposable d) { }
         }, null);
     }
 
@@ -1662,7 +1662,7 @@ public class ObservableNullTests {
     public void liftReturnsNull() {
         just1.lift(new ObservableOperator<Object, Integer>() {
             @Override
-            public Observer<? super Integer> apply(Observer<? super Object> s) {
+            public Observer<? super Integer> apply(Observer<? super Object> observer) {
                 return null;
             }
         }).blockingSubscribe();

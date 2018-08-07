@@ -50,9 +50,9 @@ public final class ObservableSwitchMapSingle<T, R> extends Observable<R> {
     }
 
     @Override
-    protected void subscribeActual(Observer<? super R> s) {
-        if (!ScalarXMapZHelper.tryAsSingle(source, mapper, s)) {
-            source.subscribe(new SwitchMapSingleMainObserver<T, R>(s, mapper, delayErrors));
+    protected void subscribeActual(Observer<? super R> observer) {
+        if (!ScalarXMapZHelper.tryAsSingle(source, mapper, observer)) {
+            source.subscribe(new SwitchMapSingleMainObserver<T, R>(observer, mapper, delayErrors));
         }
     }
 
@@ -91,9 +91,9 @@ public final class ObservableSwitchMapSingle<T, R> extends Observable<R> {
         }
 
         @Override
-        public void onSubscribe(Disposable s) {
-            if (DisposableHelper.validate(upstream, s)) {
-                upstream = s;
+        public void onSubscribe(Disposable d) {
+            if (DisposableHelper.validate(upstream, d)) {
+                upstream = d;
                 downstream.onSubscribe(this);
             }
         }

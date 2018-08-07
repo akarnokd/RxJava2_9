@@ -1294,19 +1294,19 @@ public abstract class Observable<T> implements ObservableSource<T> {
     }
 
     /**
-     * Concatenates a sequence of ObservableSources eagerly into a single stream of values.
+     * Concatenates an array of ObservableSources eagerly into a single stream of values.
+     * <p>
+     * <img width="640" height="410" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatArrayEager.png" alt="">
      * <p>
      * Eager concatenation means that once a subscriber subscribes, this operator subscribes to all of the
      * source ObservableSources. The operator buffers the values emitted by these ObservableSources and then drains them
      * in order, each one after the previous one completes.
-     * <p>
-     * <img width="640" height="410" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatArrayEager.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>This method does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
      * @param <T> the value type
-     * @param sources a sequence of ObservableSources that need to be eagerly concatenated
+     * @param sources an array of ObservableSources that need to be eagerly concatenated
      * @return the new ObservableSource instance with the specified concatenation behavior
      * @since 2.0
      */
@@ -1317,7 +1317,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
     }
 
     /**
-     * Concatenates a sequence of ObservableSources eagerly into a single stream of values.
+     * Concatenates an array of ObservableSources eagerly into a single stream of values.
+     * <p>
+     * <img width="640" height="495" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatArrayEager.nn.png" alt="">
      * <p>
      * Eager concatenation means that once a subscriber subscribes, this operator subscribes to all of the
      * source ObservableSources. The operator buffers the values emitted by these ObservableSources and then drains them
@@ -1327,7 +1329,7 @@ public abstract class Observable<T> implements ObservableSource<T> {
      *  <dd>This method does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
      * @param <T> the value type
-     * @param sources a sequence of ObservableSources that need to be eagerly concatenated
+     * @param sources an array of ObservableSources that need to be eagerly concatenated
      * @param maxConcurrency the maximum number of concurrent subscriptions at a time, Integer.MAX_VALUE
      *                       is interpreted as indication to subscribe to all sources at once
      * @param prefetch the number of elements to prefetch from each ObservableSource source
@@ -1339,6 +1341,58 @@ public abstract class Observable<T> implements ObservableSource<T> {
     @SchedulerSupport(SchedulerSupport.NONE)
     public static <T> Observable<T> concatArrayEager(int maxConcurrency, int prefetch, ObservableSource<? extends T>... sources) {
         return fromArray(sources).concatMapEagerDelayError((Function)Functions.identity(), maxConcurrency, prefetch, false);
+    }
+
+    /**
+     * Concatenates an array of {@link ObservableSource}s eagerly into a single stream of values
+     * and delaying any errors until all sources terminate.
+     * <p>
+     * <img width="640" height="354" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatArrayEagerDelayError.png" alt="">
+     * <p>
+     * Eager concatenation means that once a subscriber subscribes, this operator subscribes to all of the
+     * source {@code ObservableSource}s. The operator buffers the values emitted by these {@code ObservableSource}s
+     * and then drains them in order, each one after the previous one completes.
+     * <dl>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>This method does not operate by default on a particular {@link Scheduler}.</dd>
+     * </dl>
+     * @param <T> the value type
+     * @param sources an array of {@code ObservableSource}s that need to be eagerly concatenated
+     * @return the new Observable instance with the specified concatenation behavior
+     * @since 2.2.1 - experimental
+     */
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.NONE)
+    public static <T> Observable<T> concatArrayEagerDelayError(ObservableSource<? extends T>... sources) {
+        return concatArrayEagerDelayError(bufferSize(), bufferSize(), sources);
+    }
+
+    /**
+     * Concatenates an array of {@link ObservableSource}s eagerly into a single stream of values
+     * and delaying any errors until all sources terminate.
+     * <p>
+     * <img width="640" height="460" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/concatArrayEagerDelayError.nn.png" alt="">
+     * <p>
+     * Eager concatenation means that once a subscriber subscribes, this operator subscribes to all of the
+     * source {@code ObservableSource}s. The operator buffers the values emitted by these {@code ObservableSource}s
+     * and then drains them in order, each one after the previous one completes.
+     * <dl>
+     *  <dt><b>Scheduler:</b></dt>
+     *  <dd>This method does not operate by default on a particular {@link Scheduler}.</dd>
+     * </dl>
+     * @param <T> the value type
+     * @param sources an array of {@code ObservableSource}s that need to be eagerly concatenated
+     * @param maxConcurrency the maximum number of concurrent subscriptions at a time, Integer.MAX_VALUE
+     *                       is interpreted as indication to subscribe to all sources at once
+     * @param prefetch the number of elements to prefetch from each {@code ObservableSource} source
+     * @return the new Observable instance with the specified concatenation behavior
+     * @since 2.2.1 - experimental
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @CheckReturnValue
+    @SchedulerSupport(SchedulerSupport.NONE)
+    public static <T> Observable<T> concatArrayEagerDelayError(int maxConcurrency, int prefetch, ObservableSource<? extends T>... sources) {
+        return fromArray(sources).concatMapEagerDelayError((Function)Functions.identity(), maxConcurrency, prefetch, true);
     }
 
     /**
@@ -4982,9 +5036,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
     public final T blockingFirst() {
-        BlockingFirstObserver<T> s = new BlockingFirstObserver<T>();
-        subscribe(s);
-        T v = s.blockingGet();
+        BlockingFirstObserver<T> observer = new BlockingFirstObserver<T>();
+        subscribe(observer);
+        T v = observer.blockingGet();
         if (v != null) {
             return v;
         }
@@ -5010,9 +5064,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
     public final T blockingFirst(T defaultItem) {
-        BlockingFirstObserver<T> s = new BlockingFirstObserver<T>();
-        subscribe(s);
-        T v = s.blockingGet();
+        BlockingFirstObserver<T> observer = new BlockingFirstObserver<T>();
+        subscribe(observer);
+        T v = observer.blockingGet();
         return v != null ? v : defaultItem;
     }
 
@@ -5119,9 +5173,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
     public final T blockingLast() {
-        BlockingLastObserver<T> s = new BlockingLastObserver<T>();
-        subscribe(s);
-        T v = s.blockingGet();
+        BlockingLastObserver<T> observer = new BlockingLastObserver<T>();
+        subscribe(observer);
+        T v = observer.blockingGet();
         if (v != null) {
             return v;
         }
@@ -5151,9 +5205,9 @@ public abstract class Observable<T> implements ObservableSource<T> {
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
     public final T blockingLast(T defaultItem) {
-        BlockingLastObserver<T> s = new BlockingLastObserver<T>();
-        subscribe(s);
-        T v = s.blockingGet();
+        BlockingLastObserver<T> observer = new BlockingLastObserver<T>();
+        subscribe(observer);
+        T v = observer.blockingGet();
         return v != null ? v : defaultItem;
     }
 
@@ -9409,11 +9463,11 @@ public abstract class Observable<T> implements ObservableSource<T> {
      *     // and subsequently this class has to send a Disposable to the downstream.
      *     // Note that relaying the upstream's Disposable directly is not allowed in RxJava
      *     &#64;Override
-     *     public void onSubscribe(Disposable s) {
+     *     public void onSubscribe(Disposable d) {
      *         if (upstream != null) {
-     *             s.dispose();
+     *             d.dispose();
      *         } else {
-     *             upstream = s;
+     *             upstream = d;
      *             downstream.onSubscribe(this);
      *         }
      *     }
@@ -10998,16 +11052,16 @@ public abstract class Observable<T> implements ObservableSource<T> {
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code safeSubscribe} does not operate by default on a particular {@link Scheduler}.</dd>
      * </dl>
-     * @param s the incoming Observer instance
+     * @param observer the incoming Observer instance
      * @throws NullPointerException if s is null
      */
     @SchedulerSupport(SchedulerSupport.NONE)
-    public final void safeSubscribe(Observer<? super T> s) {
-        ObjectHelper.requireNonNull(s, "s is null");
-        if (s instanceof SafeObserver) {
-            subscribe(s);
+    public final void safeSubscribe(Observer<? super T> observer) {
+        ObjectHelper.requireNonNull(observer, "s is null");
+        if (observer instanceof SafeObserver) {
+            subscribe(observer);
         } else {
-            subscribe(new SafeObserver<T>(s));
+            subscribe(new SafeObserver<T>(observer));
         }
     }
 
@@ -14072,19 +14126,19 @@ public abstract class Observable<T> implements ObservableSource<T> {
     @CheckReturnValue
     @SchedulerSupport(SchedulerSupport.NONE)
     public final Flowable<T> toFlowable(BackpressureStrategy strategy) {
-        Flowable<T> o = new FlowableFromObservable<T>(this);
+        Flowable<T> f = new FlowableFromObservable<T>(this);
 
         switch (strategy) {
             case DROP:
-                return o.onBackpressureDrop();
+                return f.onBackpressureDrop();
             case LATEST:
-                return o.onBackpressureLatest();
+                return f.onBackpressureLatest();
             case MISSING:
-                return o;
+                return f;
             case ERROR:
-                return RxJavaPlugins.onAssembly(new FlowableOnBackpressureError<T>(o));
+                return RxJavaPlugins.onAssembly(new FlowableOnBackpressureError<T>(f));
             default:
-                return o.onBackpressureBuffer();
+                return f.onBackpressureBuffer();
         }
     }
 

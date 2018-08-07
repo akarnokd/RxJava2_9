@@ -38,61 +38,61 @@ public final class MaybeDoFinally<T> extends AbstractMaybeWithUpstream<T, T> {
     }
 
     @Override
-    protected void subscribeActual(MaybeObserver<? super T> s) {
-        source.subscribe(new DoFinallyObserver<T>(s, onFinally));
+    protected void subscribeActual(MaybeObserver<? super T> observer) {
+        source.subscribe(new DoFinallyObserver<T>(observer, onFinally));
     }
 
     static final class DoFinallyObserver<T> extends AtomicInteger implements MaybeObserver<T>, Disposable {
 
         private static final long serialVersionUID = 4109457741734051389L;
 
-        final MaybeObserver<? super T> actual;
+        final MaybeObserver<? super T> downstream;
 
         final Action onFinally;
 
-        Disposable d;
+        Disposable upstream;
 
         DoFinallyObserver(MaybeObserver<? super T> actual, Action onFinally) {
-            this.actual = actual;
+            this.downstream = actual;
             this.onFinally = onFinally;
         }
 
         @Override
         public void onSubscribe(Disposable d) {
-            if (DisposableHelper.validate(this.d, d)) {
-                this.d = d;
+            if (DisposableHelper.validate(this.upstream, d)) {
+                this.upstream = d;
 
-                actual.onSubscribe(this);
+                downstream.onSubscribe(this);
             }
         }
 
         @Override
         public void onSuccess(T t) {
-            actual.onSuccess(t);
+            downstream.onSuccess(t);
             runFinally();
         }
 
         @Override
         public void onError(Throwable t) {
-            actual.onError(t);
+            downstream.onError(t);
             runFinally();
         }
 
         @Override
         public void onComplete() {
-            actual.onComplete();
+            downstream.onComplete();
             runFinally();
         }
 
         @Override
         public void dispose() {
-            d.dispose();
+            upstream.dispose();
             runFinally();
         }
 
         @Override
         public boolean isDisposed() {
-            return d.isDisposed();
+            return upstream.isDisposed();
         }
 
         void runFinally() {

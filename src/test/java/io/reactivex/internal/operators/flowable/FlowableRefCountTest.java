@@ -63,14 +63,14 @@ public class FlowableRefCountTest {
                 .publish().refCount();
 
         final AtomicInteger receivedCount = new AtomicInteger();
-        Disposable s1 = r.subscribe(new Consumer<Long>() {
+        Disposable d1 = r.subscribe(new Consumer<Long>() {
             @Override
             public void accept(Long l) {
                 receivedCount.incrementAndGet();
             }
         });
 
-        Disposable s2 = r.subscribe();
+        Disposable d2 = r.subscribe();
 
         try {
             Thread.sleep(10);
@@ -94,8 +94,8 @@ public class FlowableRefCountTest {
         // give time to emit
 
         // now unsubscribe
-        s2.dispose(); // unsubscribe s2 first as we're counting in 1 and there can be a race between unsubscribe and one subscriber getting a value but not the other
-        s1.dispose();
+        d2.dispose(); // unsubscribe s2 first as we're counting in 1 and there can be a race between unsubscribe and one subscriber getting a value but not the other
+        d1.dispose();
 
         System.out.println("onNext: " + nextCount.get());
 
@@ -125,14 +125,14 @@ public class FlowableRefCountTest {
                 .publish().refCount();
 
         final AtomicInteger receivedCount = new AtomicInteger();
-        Disposable s1 = r.subscribe(new Consumer<Integer>() {
+        Disposable d1 = r.subscribe(new Consumer<Integer>() {
             @Override
             public void accept(Integer l) {
                 receivedCount.incrementAndGet();
             }
         });
 
-        Disposable s2 = r.subscribe();
+        Disposable d2 = r.subscribe();
 
         // give time to emit
         try {
@@ -141,8 +141,8 @@ public class FlowableRefCountTest {
         }
 
         // now unsubscribe
-        s2.dispose(); // unsubscribe s2 first as we're counting in 1 and there can be a race between unsubscribe and one subscriber getting a value but not the other
-        s1.dispose();
+        d2.dispose(); // unsubscribe s2 first as we're counting in 1 and there can be a race between unsubscribe and one subscriber getting a value but not the other
+        d1.dispose();
 
         System.out.println("onNext Count: " + nextCount.get());
 
@@ -229,7 +229,7 @@ public class FlowableRefCountTest {
         final CountDownLatch unsubscribeLatch = new CountDownLatch(1);
         final CountDownLatch subscribeLatch = new CountDownLatch(1);
 
-        Flowable<Long> o = synchronousInterval()
+        Flowable<Long> f = synchronousInterval()
                 .doOnSubscribe(new Consumer<Subscription>() {
                     @Override
                     public void accept(Subscription s) {
@@ -248,7 +248,7 @@ public class FlowableRefCountTest {
                 });
 
         TestSubscriber<Long> s = new TestSubscriber<Long>();
-        o.publish().refCount().subscribeOn(Schedulers.newThread()).subscribe(s);
+        f.publish().refCount().subscribeOn(Schedulers.newThread()).subscribe(s);
         System.out.println("send unsubscribe");
         // wait until connected
         subscribeLatch.await();
@@ -275,7 +275,7 @@ public class FlowableRefCountTest {
     @Test
     public void testConnectUnsubscribeRaceCondition() throws InterruptedException {
         final AtomicInteger subUnsubCount = new AtomicInteger();
-        Flowable<Long> o = synchronousInterval()
+        Flowable<Long> f = synchronousInterval()
                 .doOnCancel(new Action() {
                     @Override
                     public void run() {
@@ -294,7 +294,7 @@ public class FlowableRefCountTest {
 
         TestSubscriber<Long> s = new TestSubscriber<Long>();
 
-        o.publish().refCount().subscribeOn(Schedulers.computation()).subscribe(s);
+        f.publish().refCount().subscribeOn(Schedulers.computation()).subscribe(s);
         System.out.println("send unsubscribe");
         // now immediately unsubscribe while subscribeOn is racing to subscribe
         s.dispose();
@@ -347,11 +347,11 @@ public class FlowableRefCountTest {
     public void onlyFirstShouldSubscribeAndLastUnsubscribe() {
         final AtomicInteger subscriptionCount = new AtomicInteger();
         final AtomicInteger unsubscriptionCount = new AtomicInteger();
-        Flowable<Integer> observable = Flowable.unsafeCreate(new Publisher<Integer>() {
+        Flowable<Integer> flowable = Flowable.unsafeCreate(new Publisher<Integer>() {
             @Override
-            public void subscribe(Subscriber<? super Integer> observer) {
+            public void subscribe(Subscriber<? super Integer> subscriber) {
                 subscriptionCount.incrementAndGet();
-                observer.onSubscribe(new Subscription() {
+                subscriber.onSubscribe(new Subscription() {
                     @Override
                     public void request(long n) {
 
@@ -364,7 +364,7 @@ public class FlowableRefCountTest {
                 });
             }
         });
-        Flowable<Integer> refCounted = observable.publish().refCount();
+        Flowable<Integer> refCounted = flowable.publish().refCount();
 
         Disposable first = refCounted.subscribe();
         assertEquals(1, subscriptionCount.get());
@@ -386,7 +386,7 @@ public class FlowableRefCountTest {
 
         // subscribe list1
         final List<Long> list1 = new ArrayList<Long>();
-        Disposable s1 = interval.subscribe(new Consumer<Long>() {
+        Disposable d1 = interval.subscribe(new Consumer<Long>() {
             @Override
             public void accept(Long t1) {
                 list1.add(t1);
@@ -401,7 +401,7 @@ public class FlowableRefCountTest {
 
         // subscribe list2
         final List<Long> list2 = new ArrayList<Long>();
-        Disposable s2 = interval.subscribe(new Consumer<Long>() {
+        Disposable d2 = interval.subscribe(new Consumer<Long>() {
             @Override
             public void accept(Long t1) {
                 list2.add(t1);
@@ -423,7 +423,7 @@ public class FlowableRefCountTest {
         assertEquals(4L, list2.get(2).longValue());
 
         // unsubscribe list1
-        s1.dispose();
+        d1.dispose();
 
         // advance further
         s.advanceTimeBy(300, TimeUnit.MILLISECONDS);
@@ -438,7 +438,7 @@ public class FlowableRefCountTest {
         assertEquals(7L, list2.get(5).longValue());
 
         // unsubscribe list2
-        s2.dispose();
+        d2.dispose();
 
         // advance further
         s.advanceTimeBy(1000, TimeUnit.MILLISECONDS);
@@ -465,17 +465,17 @@ public class FlowableRefCountTest {
     public void testAlreadyUnsubscribedClient() {
         Subscriber<Integer> done = CancelledSubscriber.INSTANCE;
 
-        Subscriber<Integer> o = TestHelper.mockSubscriber();
+        Subscriber<Integer> subscriber = TestHelper.mockSubscriber();
 
         Flowable<Integer> result = Flowable.just(1).publish().refCount();
 
         result.subscribe(done);
 
-        result.subscribe(o);
+        result.subscribe(subscriber);
 
-        verify(o).onNext(1);
-        verify(o).onComplete();
-        verify(o, never()).onError(any(Throwable.class));
+        verify(subscriber).onNext(1);
+        verify(subscriber).onComplete();
+        verify(subscriber, never()).onError(any(Throwable.class));
     }
 
     @Test
@@ -484,12 +484,12 @@ public class FlowableRefCountTest {
 
         Subscriber<Integer> done = CancelledSubscriber.INSTANCE;
 
-        Subscriber<Integer> o = TestHelper.mockSubscriber();
-        InOrder inOrder = inOrder(o);
+        Subscriber<Integer> subscriber = TestHelper.mockSubscriber();
+        InOrder inOrder = inOrder(subscriber);
 
         Flowable<Integer> result = source.publish().refCount();
 
-        result.subscribe(o);
+        result.subscribe(subscriber);
 
         source.onNext(1);
 
@@ -498,17 +498,17 @@ public class FlowableRefCountTest {
         source.onNext(2);
         source.onComplete();
 
-        inOrder.verify(o).onNext(1);
-        inOrder.verify(o).onNext(2);
-        inOrder.verify(o).onComplete();
-        verify(o, never()).onError(any(Throwable.class));
+        inOrder.verify(subscriber).onNext(1);
+        inOrder.verify(subscriber).onNext(2);
+        inOrder.verify(subscriber).onComplete();
+        verify(subscriber, never()).onError(any(Throwable.class));
     }
 
     @Test
     public void testConnectDisconnectConnectAndSubjectState() {
-        Flowable<Integer> o1 = Flowable.just(10);
-        Flowable<Integer> o2 = Flowable.just(20);
-        Flowable<Integer> combined = Flowable.combineLatest(o1, o2, new BiFunction<Integer, Integer, Integer>() {
+        Flowable<Integer> f1 = Flowable.just(10);
+        Flowable<Integer> f2 = Flowable.just(20);
+        Flowable<Integer> combined = Flowable.combineLatest(f1, f2, new BiFunction<Integer, Integer, Integer>() {
             @Override
             public Integer apply(Integer t1, Integer t2) {
                 return t1 + t2;
@@ -533,70 +533,77 @@ public class FlowableRefCountTest {
 
     @Test(timeout = 10000)
     public void testUpstreamErrorAllowsRetry() throws InterruptedException {
-        final AtomicInteger intervalSubscribed = new AtomicInteger();
-        Flowable<String> interval =
-                Flowable.interval(200,TimeUnit.MILLISECONDS)
-                        .doOnSubscribe(new Consumer<Subscription>() {
-                            @Override
-                            public void accept(Subscription s) {
-                                            System.out.println("Subscribing to interval " + intervalSubscribed.incrementAndGet());
-                                    }
-                        }
-                         )
-                        .flatMap(new Function<Long, Publisher<String>>() {
-                            @Override
-                            public Publisher<String> apply(Long t1) {
-                                    return Flowable.defer(new Callable<Publisher<String>>() {
-                                        @Override
-                                        public Publisher<String> call() {
-                                                return Flowable.<String>error(new Exception("Some exception"));
+        List<Throwable> errors = TestHelper.trackPluginErrors();
+        try {
+            final AtomicInteger intervalSubscribed = new AtomicInteger();
+            Flowable<String> interval =
+                    Flowable.interval(200,TimeUnit.MILLISECONDS)
+                            .doOnSubscribe(new Consumer<Subscription>() {
+                                @Override
+                                public void accept(Subscription s) {
+                                                System.out.println("Subscribing to interval " + intervalSubscribed.incrementAndGet());
                                         }
-                                    });
                             }
-                        })
-                        .onErrorResumeNext(new Function<Throwable, Publisher<String>>() {
-                            @Override
-                            public Publisher<String> apply(Throwable t1) {
-                                    return Flowable.error(t1);
-                            }
-                        })
-                        .publish()
-                        .refCount();
+                             )
+                            .flatMap(new Function<Long, Publisher<String>>() {
+                                @Override
+                                public Publisher<String> apply(Long t1) {
+                                        return Flowable.defer(new Callable<Publisher<String>>() {
+                                            @Override
+                                            public Publisher<String> call() {
+                                                    return Flowable.<String>error(new TestException("Some exception"));
+                                            }
+                                        });
+                                }
+                            })
+                            .onErrorResumeNext(new Function<Throwable, Publisher<String>>() {
+                                @Override
+                                public Publisher<String> apply(Throwable t1) {
+                                        return Flowable.error(t1);
+                                }
+                            })
+                            .publish()
+                            .refCount();
 
-        interval
-                .doOnError(new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable t1) {
-                            System.out.println("Subscriber 1 onError: " + t1);
-                    }
-                })
-                .retry(5)
-                .subscribe(new Consumer<String>() {
-                    @Override
-                    public void accept(String t1) {
-                            System.out.println("Subscriber 1: " + t1);
-                    }
-                });
-        Thread.sleep(100);
-        interval
-        .doOnError(new Consumer<Throwable>() {
-            @Override
-            public void accept(Throwable t1) {
-                    System.out.println("Subscriber 2 onError: " + t1);
-            }
-        })
-        .retry(5)
-                .subscribe(new Consumer<String>() {
-                    @Override
-                    public void accept(String t1) {
-                            System.out.println("Subscriber 2: " + t1);
-                    }
-                });
+            interval
+                    .doOnError(new Consumer<Throwable>() {
+                        @Override
+                        public void accept(Throwable t1) {
+                                System.out.println("Subscriber 1 onError: " + t1);
+                        }
+                    })
+                    .retry(5)
+                    .subscribe(new Consumer<String>() {
+                        @Override
+                        public void accept(String t1) {
+                                System.out.println("Subscriber 1: " + t1);
+                        }
+                    });
+            Thread.sleep(100);
+            interval
+            .doOnError(new Consumer<Throwable>() {
+                @Override
+                public void accept(Throwable t1) {
+                        System.out.println("Subscriber 2 onError: " + t1);
+                }
+            })
+            .retry(5)
+                    .subscribe(new Consumer<String>() {
+                        @Override
+                        public void accept(String t1) {
+                                System.out.println("Subscriber 2: " + t1);
+                        }
+                    });
 
-        Thread.sleep(1300);
+            Thread.sleep(1300);
 
-        System.out.println(intervalSubscribed.get());
-        assertEquals(6, intervalSubscribed.get());
+            System.out.println(intervalSubscribed.get());
+            assertEquals(6, intervalSubscribed.get());
+
+            TestHelper.assertError(errors, 0, OnErrorNotImplementedException.class);
+        } finally {
+            RxJavaPlugins.reset();
+        }
     }
 
     private enum CancelledSubscriber implements FlowableSubscriber<Integer> {
@@ -624,20 +631,20 @@ public class FlowableRefCountTest {
     @Test
     public void noOpConnect() {
         final int[] calls = { 0 };
-        Flowable<Integer> o = new ConnectableFlowable<Integer>() {
+        Flowable<Integer> f = new ConnectableFlowable<Integer>() {
             @Override
             public void connect(Consumer<? super Disposable> connection) {
                 calls[0]++;
             }
 
             @Override
-            protected void subscribeActual(Subscriber<? super Integer> observer) {
-                observer.onSubscribe(new BooleanSubscription());
+            protected void subscribeActual(Subscriber<? super Integer> subscriber) {
+                subscriber.onSubscribe(new BooleanSubscription());
             }
         }.refCount();
 
-        o.test();
-        o.test();
+        f.test();
+        f.test();
 
         assertEquals(1, calls[0]);
     }
@@ -687,14 +694,14 @@ public class FlowableRefCountTest {
         .replay(1)
         .refCount();
 
-        Disposable s1 = source.subscribe();
-        Disposable s2 = source.subscribe();
+        Disposable d1 = source.subscribe();
+        Disposable d2 = source.subscribe();
 
-        s1.dispose();
-        s2.dispose();
+        d1.dispose();
+        d2.dispose();
 
-        s1 = null;
-        s2 = null;
+        d1 = null;
+        d2 = null;
 
         System.gc();
         Thread.sleep(100);
@@ -758,14 +765,14 @@ public class FlowableRefCountTest {
         .publish()
         .refCount();
 
-        Disposable s1 = source.test();
-        Disposable s2 = source.test();
+        Disposable d1 = source.test();
+        Disposable d2 = source.test();
 
-        s1.dispose();
-        s2.dispose();
+        d1.dispose();
+        d2.dispose();
 
-        s1 = null;
-        s2 = null;
+        d1 = null;
+        d2 = null;
 
         System.gc();
         Thread.sleep(100);
@@ -783,11 +790,11 @@ public class FlowableRefCountTest {
 
         assertTrue(((Disposable)cf).isDisposed());
 
-        Disposable s = cf.connect();
+        Disposable connection = cf.connect();
 
         assertFalse(((Disposable)cf).isDisposed());
 
-        s.dispose();
+        connection.dispose();
 
         assertTrue(((Disposable)cf).isDisposed());
     }
@@ -804,7 +811,7 @@ public class FlowableRefCountTest {
         }
 
         @Override
-        protected void subscribeActual(Subscriber<? super Object> observer) {
+        protected void subscribeActual(Subscriber<? super Object> subscriber) {
             throw new TestException("subscribeActual");
         }
     }
@@ -831,8 +838,8 @@ public class FlowableRefCountTest {
         }
 
         @Override
-        protected void subscribeActual(Subscriber<? super Object> observer) {
-            observer.onSubscribe(new BooleanSubscription());
+        protected void subscribeActual(Subscriber<? super Object> subscriber) {
+            subscriber.onSubscribe(new BooleanSubscription());
         }
     }
 
@@ -844,21 +851,28 @@ public class FlowableRefCountTest {
         }
 
         @Override
-        protected void subscribeActual(Subscriber<? super Object> observer) {
-            observer.onSubscribe(new BooleanSubscription());
+        protected void subscribeActual(Subscriber<? super Object> subscriber) {
+            subscriber.onSubscribe(new BooleanSubscription());
         }
     }
 
     @Test
     public void badSourceSubscribe() {
-        BadFlowableSubscribe bo = new BadFlowableSubscribe();
-
+        List<Throwable> errors = TestHelper.trackPluginErrors();
         try {
-            bo.refCount()
-            .test();
-            fail("Should have thrown");
-        } catch (NullPointerException ex) {
-            assertTrue(ex.getCause() instanceof TestException);
+            BadFlowableSubscribe bo = new BadFlowableSubscribe();
+
+            try {
+                bo.refCount()
+                .test();
+                fail("Should have thrown");
+            } catch (NullPointerException ex) {
+                assertTrue(ex.getCause() instanceof TestException);
+            }
+
+            TestHelper.assertUndeliverable(errors, 0, TestException.class);
+        } finally {
+            RxJavaPlugins.reset();
         }
     }
 
@@ -877,14 +891,21 @@ public class FlowableRefCountTest {
 
     @Test
     public void badSourceConnect() {
-        BadFlowableConnect bf = new BadFlowableConnect();
-
+        List<Throwable> errors = TestHelper.trackPluginErrors();
         try {
-            bf.refCount()
-            .test();
-            fail("Should have thrown");
-        } catch (NullPointerException ex) {
-            assertTrue(ex.getCause() instanceof TestException);
+            BadFlowableConnect bf = new BadFlowableConnect();
+
+            try {
+                bf.refCount()
+                .test();
+                fail("Should have thrown");
+            } catch (NullPointerException ex) {
+                assertTrue(ex.getCause() instanceof TestException);
+            }
+
+            TestHelper.assertUndeliverable(errors, 0, TestException.class);
+        } finally {
+            RxJavaPlugins.reset();
         }
     }
 
@@ -902,9 +923,9 @@ public class FlowableRefCountTest {
         }
 
         @Override
-        protected void subscribeActual(Subscriber<? super Object> observer) {
+        protected void subscribeActual(Subscriber<? super Object> subscriber) {
             if (++count == 1) {
-                observer.onSubscribe(new BooleanSubscription());
+                subscriber.onSubscribe(new BooleanSubscription());
             } else {
                 throw new TestException("subscribeActual");
             }
@@ -913,15 +934,22 @@ public class FlowableRefCountTest {
 
     @Test
     public void badSourceSubscribe2() {
-        BadFlowableSubscribe2 bf = new BadFlowableSubscribe2();
-
-        Flowable<Object> o = bf.refCount();
-        o.test();
+        List<Throwable> errors = TestHelper.trackPluginErrors();
         try {
-            o.test();
-            fail("Should have thrown");
-        } catch (NullPointerException ex) {
-            assertTrue(ex.getCause() instanceof TestException);
+            BadFlowableSubscribe2 bf = new BadFlowableSubscribe2();
+
+            Flowable<Object> f = bf.refCount();
+            f.test();
+            try {
+                f.test();
+                fail("Should have thrown");
+            } catch (NullPointerException ex) {
+                assertTrue(ex.getCause() instanceof TestException);
+            }
+
+            TestHelper.assertUndeliverable(errors, 0, TestException.class);
+        } finally {
+            RxJavaPlugins.reset();
         }
     }
 
@@ -938,9 +966,9 @@ public class FlowableRefCountTest {
         }
 
         @Override
-        protected void subscribeActual(Subscriber<? super Object> observer) {
-            observer.onSubscribe(new BooleanSubscription());
-            observer.onComplete();
+        protected void subscribeActual(Subscriber<? super Object> subscriber) {
+            subscriber.onSubscribe(new BooleanSubscription());
+            subscriber.onComplete();
         }
 
         @Override
@@ -956,14 +984,21 @@ public class FlowableRefCountTest {
 
     @Test
     public void badSourceCompleteDisconnect() {
-        BadFlowableConnect2 bf = new BadFlowableConnect2();
-
+        List<Throwable> errors = TestHelper.trackPluginErrors();
         try {
-            bf.refCount()
-            .test();
-            fail("Should have thrown");
-        } catch (NullPointerException ex) {
-            assertTrue(ex.getCause() instanceof TestException);
+            BadFlowableConnect2 bf = new BadFlowableConnect2();
+
+            try {
+                bf.refCount()
+                .test();
+                fail("Should have thrown");
+            } catch (NullPointerException ex) {
+                assertTrue(ex.getCause() instanceof TestException);
+            }
+
+            TestHelper.assertUndeliverable(errors, 0, TestException.class);
+        } finally {
+            RxJavaPlugins.reset();
         }
     }
 
@@ -1181,12 +1216,12 @@ public class FlowableRefCountTest {
         }
 
         @Override
-        protected void subscribeActual(Subscriber<? super Object> observer) {
-            observer.onSubscribe(new BooleanSubscription());
-            observer.onSubscribe(new BooleanSubscription());
-            observer.onComplete();
-            observer.onComplete();
-            observer.onError(new TestException());
+        protected void subscribeActual(Subscriber<? super Object> subscriber) {
+            subscriber.onSubscribe(new BooleanSubscription());
+            subscriber.onSubscribe(new BooleanSubscription());
+            subscriber.onComplete();
+            subscriber.onComplete();
+            subscriber.onError(new TestException());
         }
 
         @Override
