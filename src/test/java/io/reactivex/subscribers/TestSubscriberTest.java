@@ -746,7 +746,6 @@ public class TestSubscriberTest {
         ts.awaitTerminalEvent();
     }
 
-
     @Test
     public void createDelegate() {
         TestSubscriber<Integer> ts1 = TestSubscriber.create();
@@ -1611,7 +1610,6 @@ public class TestSubscriberTest {
         }
     }
 
-
     @Test
     public void syncQueueThrows() {
         TestSubscriber<Object> ts = new TestSubscriber<Object>();
@@ -1825,7 +1823,6 @@ public class TestSubscriberTest {
             assertTrue(ex.toString(), ex.toString().contains("timeout!"));
         }
     }
-
 
     @Test
     public void timeoutIndicated3() throws InterruptedException {
@@ -2188,5 +2185,39 @@ public class TestSubscriberTest {
     public void awaitCount0() {
         TestSubscriber<Integer> ts = TestSubscriber.create();
         ts.awaitCount(0, TestWaitStrategy.SLEEP_1MS, 0);
+    }
+
+    @Test
+    public void assertValueSetWiderSet() {
+        Set<Integer> set = new HashSet<Integer>(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7));
+
+        Flowable.just(4, 5, 1, 3, 2)
+        .test()
+        .assertValueSet(set);
+    }
+
+    @Test
+    public void assertValueSetExact() {
+        Set<Integer> set = new HashSet<Integer>(Arrays.asList(1, 2, 3, 4, 5));
+
+        Flowable.just(4, 5, 1, 3, 2)
+        .test()
+        .assertValueSet(set)
+        .assertValueCount(set.size());
+    }
+
+    @Test
+    public void assertValueSetMissing() {
+        Set<Integer> set = new HashSet<Integer>(Arrays.asList(0, 1, 2, 4, 5, 6, 7));
+
+        try {
+            Flowable.range(1, 5)
+            .test()
+            .assertValueSet(set);
+
+            throw new RuntimeException("Should have failed");
+        } catch (AssertionError ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().contains("Value not in the expected collection: " + 3));
+        }
     }
 }

@@ -113,7 +113,7 @@ public final class FlowableConcatMap<T, R> extends AbstractFlowableWithUpstream<
 
                 if (s instanceof QueueSubscription) {
                     @SuppressWarnings("unchecked") QueueSubscription<T> f = (QueueSubscription<T>)s;
-                    int m = f.requestFusion(QueueSubscription.ANY);
+                    int m = f.requestFusion(QueueSubscription.ANY | QueueSubscription.BOUNDARY);
                     if (m == QueueSubscription.SYNC) {
                         sourceMode = m;
                         queue = f;
@@ -416,7 +416,6 @@ public final class FlowableConcatMap<T, R> extends AbstractFlowableWithUpstream<
         public void innerNext(R value) {
             downstream.onNext(value);
         }
-
 
         @Override
         public void innerError(Throwable e) {
