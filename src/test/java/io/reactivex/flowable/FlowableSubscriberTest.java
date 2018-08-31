@@ -231,9 +231,8 @@ public class FlowableSubscriberTest {
                     public void onNext(String t) {
 
                     }
-
-
                 };
+
                 return as;
             }
         };
@@ -815,7 +814,7 @@ public class FlowableSubscriberTest {
                 Flowable.just(1).test();
                 fail("Should have thrown");
             } catch (NullPointerException ex) {
-                assertEquals("Plugin returned null Subscriber", ex.getMessage());
+                assertEquals("The RxJavaPlugins.onSubscribe hook returned a null FlowableSubscriber. Please check the handler provided to RxJavaPlugins.setOnFlowableSubscribe for invalid null returns. Further reading: https://github.com/ReactiveX/RxJava/wiki/Plugins", ex.getMessage());
             }
         } finally {
             RxJavaPlugins.reset();

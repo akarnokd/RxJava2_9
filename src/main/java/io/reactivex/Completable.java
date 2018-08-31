@@ -388,7 +388,6 @@ public abstract class Completable implements CompletableSource {
         return RxJavaPlugins.onAssembly(new CompletableError(error));
     }
 
-
     /**
      * Returns a Completable instance that runs the given Action for each subscriber and
      * emits either an unchecked exception or simply completes.
@@ -789,7 +788,6 @@ public abstract class Completable implements CompletableSource {
         ObjectHelper.requireNonNull(sources, "sources is null");
         return RxJavaPlugins.onAssembly(new CompletableMergeDelayErrorIterable(sources));
     }
-
 
     /**
      * Returns a Completable that subscribes to all Completables in the source sequence and delays
@@ -2167,6 +2165,8 @@ public abstract class Completable implements CompletableSource {
         try {
 
             observer = RxJavaPlugins.onSubscribe(this, observer);
+
+            ObjectHelper.requireNonNull(observer, "The RxJavaPlugins.onSubscribe hook returned a null CompletableObserver. Please check the handler provided to RxJavaPlugins.setOnCompletableSubscribe for invalid null returns. Further reading: https://github.com/ReactiveX/RxJava/wiki/Plugins");
 
             subscribeActual(observer);
         } catch (NullPointerException ex) { // NOPMD
