@@ -1757,8 +1757,14 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <dl>
      *   <dt><b>Scheduler:</b></dt>
      *   <dd>{@code fromCallable} does not operate by default on a particular {@link Scheduler}.</dd>
+     *   <dt><b>Error handling:</b></dt>
+     *   <dd> If the {@link Callable} throws an exception, the respective {@link Throwable} is
+     *   delivered to the downstream via {@link Observer#onError(Throwable)},
+     *   except when the downstream has disposed this {@code Observable} source.
+     *   In this latter case, the {@code Throwable} is delivered to the global error handler via
+     *   {@link RxJavaPlugins#onError(Throwable)} as an {@link io.reactivex.exceptions.UndeliverableException UndeliverableException}.
+     *   </dd>
      * </dl>
-     *
      * @param supplier
      *         a function, the execution of which should be deferred; {@code fromCallable} will invoke this
      *         function only when an observer subscribes to the ObservableSource that {@code fromCallable} returns
@@ -5334,15 +5340,16 @@ public abstract class Observable<T> implements ObservableSource<T> {
     }
 
     /**
-     * Returns a {@link Future} representing the single value emitted by this {@code Observable}.
+     * Returns a {@link Future} representing the only value emitted by this {@code Observable}.
+     * <p>
+     * <img width="640" height="312" src="https://github.com/ReactiveX/RxJava/wiki/images/rx-operators/toFuture.o.png" alt="">
      * <p>
      * If the {@link Observable} emits more than one item, {@link java.util.concurrent.Future} will receive an
-     * {@link java.lang.IllegalArgumentException}. If the {@link Observable} is empty, {@link java.util.concurrent.Future}
-     * will receive an {@link java.util.NoSuchElementException}.
+     * {@link java.lang.IndexOutOfBoundsException}. If the {@link Observable} is empty, {@link java.util.concurrent.Future}
+     * will receive an {@link java.util.NoSuchElementException}. The {@code Observable} source has to terminate in order
+     * for the returned {@code Future} to terminate as well.
      * <p>
      * If the {@code Observable} may emit more than one item, use {@code Observable.toList().toFuture()}.
-     * <p>
-     * <img width="640" height="389" src="https://github.com/ReactiveX/RxJava/wiki/images/rx-operators/toFuture.o.png" alt="">
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code toFuture} does not operate by default on a particular {@link Scheduler}.</dd>

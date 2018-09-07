@@ -1955,6 +1955,13 @@ public abstract class Flowable<T> implements Publisher<T> {
      *   <dd>The operator honors backpressure from downstream.</dd>
      *   <dt><b>Scheduler:</b></dt>
      *   <dd>{@code fromCallable} does not operate by default on a particular {@link Scheduler}.</dd>
+     *   <dt><b>Error handling:</b></dt>
+     *   <dd> If the {@link Callable} throws an exception, the respective {@link Throwable} is
+     *   delivered to the downstream via {@link Subscriber#onError(Throwable)},
+     *   except when the downstream has canceled this {@code Flowable} source.
+     *   In this latter case, the {@code Throwable} is delivered to the global error handler via
+     *   {@link RxJavaPlugins#onError(Throwable)} as an {@link io.reactivex.exceptions.UndeliverableException UndeliverableException}.
+     *   </dd>
      * </dl>
      *
      * @param supplier
@@ -5835,15 +5842,16 @@ public abstract class Flowable<T> implements Publisher<T> {
     }
 
     /**
-     * Returns a {@link Future} representing the single value emitted by this {@code Flowable}.
+     * Returns a {@link Future} representing the only value emitted by this {@code Flowable}.
+     * <p>
+     * <img width="640" height="324" src="https://github.com/ReactiveX/RxJava/wiki/images/rx-operators/Flowable.toFuture.png" alt="">
      * <p>
      * If the {@link Flowable} emits more than one item, {@link java.util.concurrent.Future} will receive an
-     * {@link java.lang.IllegalArgumentException}. If the {@link Flowable} is empty, {@link java.util.concurrent.Future}
-     * will receive a {@link java.util.NoSuchElementException}.
+     * {@link java.lang.IndexOutOfBoundsException}. If the {@link Flowable} is empty, {@link java.util.concurrent.Future}
+     * will receive a {@link java.util.NoSuchElementException}. The {@code Flowable} source has to terminate in order
+     * for the returned {@code Future} to terminate as well.
      * <p>
      * If the {@code Flowable} may emit more than one item, use {@code Flowable.toList().toFuture()}.
-     * <p>
-     * <img width="640" height="395" src="https://github.com/ReactiveX/RxJava/wiki/images/rx-operators/B.toFuture.png" alt="">
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator consumes the source {@code Flowable} in an unbounded manner
@@ -12129,8 +12137,6 @@ public abstract class Flowable<T> implements Publisher<T> {
      * Publisher, then feeds the result of that function along with the second item emitted by the source
      * Publisher into the same function, and so on until all items have been emitted by the finite source Publisher,
      * and emits the final result from the final call to your function as its sole item.
-     * <p>
-     * If the source is empty, a {@code NoSuchElementException} is signaled.
      * <p>
      * <img width="640" height="320" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/reduce.png" alt="">
      * <p>
