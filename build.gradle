@@ -70,7 +70,7 @@ if (runJacoco) {
     apply plugin: "jacoco"
 }
 apply plugin: "maven"
-apply plugin: "osgi" //"biz.aQute.bnd"
+apply plugin: "osgi" //"biz.aQute.bnd.builder"
 apply plugin: "me.champeau.gradle.jmh"
 apply plugin: "com.github.hierynomus.license"
 apply plugin: "com.jfrog.bintray"
