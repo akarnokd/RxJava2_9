@@ -23,13 +23,17 @@ matrix:
     - env: JDK='Oracle JDK 9 target 9' RXJAVA_TARGET=1.9
       jdk: oraclejdk9
     - env: JDK='Oracle JDK 10 target 6' RXJAVA_TARGET=1.6
-      install: . ./install-jdk.sh -F 10 -L BCL
+      jdk: openjdk10
+#      install: . ./install-jdk.sh -F 10 -L BCL
     - env: JDK='Oracle JDK 10 target 8' RXJAVA_TARGET=1.8
-      install: . ./install-jdk.sh -F 10 -L BCL
+      jdk: openjdk10
+#      install: . ./install-jdk.sh -F 10 -L BCL
     - env: JDK='Oracle JDK 10 target 9' RXJAVA_TARGET=1.9
-      install: . ./install-jdk.sh -F 10 -L BCL
+#      install: . ./install-jdk.sh -F 10 -L BCL
+      jdk: openjdk10
     - env: JDK='Oracle JDK 10 target 10' RXJAVA_TARGET=10
-      install: . ./install-jdk.sh -F 10 -L BCL
+#      install: . ./install-jdk.sh -F 10 -L BCL
+      jdk: openjdk10
     - env: JDK='Oracle JDK 11 target 6' RXJAVA_TARGET=1.6
       install: . ./install-jdk.sh -F 11 -L BCL
     - env: JDK='Oracle JDK 11 target 8' RXJAVA_TARGET=1.8
