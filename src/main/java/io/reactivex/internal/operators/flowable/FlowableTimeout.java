@@ -208,6 +208,7 @@ public final class FlowableTimeout<T, U, V> extends AbstractFlowableWithUpstream
         TimeoutFallbackSubscriber(Subscriber<? super T> actual,
                 Function<? super T, ? extends Publisher<?>> itemTimeoutIndicator,
                         Publisher<? extends T> fallback) {
+            super(true);
             this.downstream = actual;
             this.itemTimeoutIndicator = itemTimeoutIndicator;
             this.task = new SequentialDisposable();
@@ -381,7 +382,7 @@ public final class FlowableTimeout<T, U, V> extends AbstractFlowableWithUpstream
 
         @Override
         public boolean isDisposed() {
-            return SubscriptionHelper.isCancelled(this.get());
+            return this.get() == SubscriptionHelper.CANCELLED;
         }
     }
 
