@@ -2210,6 +2210,11 @@ public abstract class Flowable<T> implements Publisher<T> {
 
     /**
      * Returns a cold, synchronous, stateless and backpressure-aware generator of values.
+     * <p>
+     * Note that the {@link Emitter#onNext}, {@link Emitter#onError} and
+     * {@link Emitter#onComplete} methods provided to the function via the {@link Emitter} instance should be called synchronously,
+     * never concurrently and only while the function body is executing. Calling them from multiple threads
+     * or outside the function call is not supported and leads to an undefined behavior.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator honors downstream backpressure.</dd>
@@ -2236,6 +2241,11 @@ public abstract class Flowable<T> implements Publisher<T> {
 
     /**
      * Returns a cold, synchronous, stateful and backpressure-aware generator of values.
+     * <p>
+     * Note that the {@link Emitter#onNext}, {@link Emitter#onError} and
+     * {@link Emitter#onComplete} methods provided to the function via the {@link Emitter} instance should be called synchronously,
+     * never concurrently and only while the function body is executing. Calling them from multiple threads
+     * or outside the function call is not supported and leads to an undefined behavior.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator honors downstream backpressure.</dd>
@@ -2263,6 +2273,11 @@ public abstract class Flowable<T> implements Publisher<T> {
 
     /**
      * Returns a cold, synchronous, stateful and backpressure-aware generator of values.
+     * <p>
+     * Note that the {@link Emitter#onNext}, {@link Emitter#onError} and
+     * {@link Emitter#onComplete} methods provided to the function via the {@link Emitter} instance should be called synchronously,
+     * never concurrently and only while the function body is executing. Calling them from multiple threads
+     * or outside the function call is not supported and leads to an undefined behavior.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator honors downstream backpressure.</dd>
@@ -2292,6 +2307,11 @@ public abstract class Flowable<T> implements Publisher<T> {
 
     /**
      * Returns a cold, synchronous, stateful and backpressure-aware generator of values.
+     * <p>
+     * Note that the {@link Emitter#onNext}, {@link Emitter#onError} and
+     * {@link Emitter#onComplete} methods provided to the function via the {@link Emitter} instance should be called synchronously,
+     * never concurrently and only while the function body is executing. Calling them from multiple threads
+     * or outside the function call is not supported and leads to an undefined behavior.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator honors downstream backpressure.</dd>
@@ -2318,6 +2338,11 @@ public abstract class Flowable<T> implements Publisher<T> {
 
     /**
      * Returns a cold, synchronous, stateful and backpressure-aware generator of values.
+     * <p>
+     * Note that the {@link Emitter#onNext}, {@link Emitter#onError} and
+     * {@link Emitter#onComplete} methods provided to the function via the {@link Emitter} instance should be called synchronously,
+     * never concurrently and only while the function body is executing. Calling them from multiple threads
+     * or outside the function call is not supported and leads to an undefined behavior.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator honors downstream backpressure.</dd>
@@ -8715,6 +8740,13 @@ public abstract class Flowable<T> implements Publisher<T> {
      * <p>
      * Note that the operator always retains the latest item from upstream regardless of the comparison result
      * and uses it in the next comparison with the next upstream item.
+     * <p>
+     * Note that if element type {@code T} in the flow is mutable, the comparison of the previous and current
+     * item may yield unexpected results if the items are mutated externally. Common cases are mutable
+     * {@code CharSequence}s or {@code List}s where the objects will actually have the same
+     * references when they are modified and {@code distinctUntilChanged} will evaluate subsequent items as same.
+     * To avoid such situation, it is recommended that mutable data is converted to an immutable one,
+     * for example using `map(CharSequence::toString)` or `map(list -> Collections.unmodifiableList(new ArrayList<>(list)))`.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator doesn't interfere with backpressure which is determined by the source {@code Publisher}'s
@@ -8751,6 +8783,13 @@ public abstract class Flowable<T> implements Publisher<T> {
      * <p>
      * Note that the operator always retains the latest key from upstream regardless of the comparison result
      * and uses it in the next comparison with the next key derived from the next upstream item.
+     * <p>
+     * Note that if element type {@code T} in the flow is mutable, the comparison of the previous and current
+     * item may yield unexpected results if the items are mutated externally. Common cases are mutable
+     * {@code CharSequence}s or {@code List}s where the objects will actually have the same
+     * references when they are modified and {@code distinctUntilChanged} will evaluate subsequent items as same.
+     * To avoid such situation, it is recommended that mutable data is converted to an immutable one,
+     * for example using `map(CharSequence::toString)` or `map(list -> Collections.unmodifiableList(new ArrayList<>(list)))`.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator doesn't interfere with backpressure which is determined by the source {@code Publisher}'s
@@ -8783,6 +8822,13 @@ public abstract class Flowable<T> implements Publisher<T> {
      * <p>
      * Note that the operator always retains the latest item from upstream regardless of the comparison result
      * and uses it in the next comparison with the next upstream item.
+     * <p>
+     * Note that if element type {@code T} in the flow is mutable, the comparison of the previous and current
+     * item may yield unexpected results if the items are mutated externally. Common cases are mutable
+     * {@code CharSequence}s or {@code List}s where the objects will actually have the same
+     * references when they are modified and {@code distinctUntilChanged} will evaluate subsequent items as same.
+     * To avoid such situation, it is recommended that mutable data is converted to an immutable one,
+     * for example using `map(CharSequence::toString)` or `map(list -> Collections.unmodifiableList(new ArrayList<>(list)))`.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>The operator doesn't interfere with backpressure which is determined by the source {@code Publisher}'s
@@ -10320,6 +10366,14 @@ public abstract class Flowable<T> implements Publisher<T> {
      * is subscribed to. For this reason, in order to avoid memory leaks, you should not simply ignore those
      * {@code GroupedPublisher}s that do not concern you. Instead, you can signal to them that they may
      * discard their buffers by applying an operator like {@link #ignoreElements} to them.
+     * <p>
+     * Note that the {@link GroupedFlowable}s should be subscribed to as soon as possible, otherwise,
+     * the unconsumed groups may starve other groups due to the internal backpressure
+     * coordination of the {@code groupBy} operator. Such hangs can be usually avoided by using
+     * {@link #flatMap(Function, int)} or {@link #concatMapEager(Function, int, int)} and overriding the default maximum concurrency
+     * value to be greater or equal to the expected number of groups, possibly using
+     * {@code Integer.MAX_VALUE} if the number of expected groups is unknown.
+     *
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>Both the returned and its inner {@code Publisher}s honor backpressure and the source {@code Publisher}
@@ -10360,6 +10414,13 @@ public abstract class Flowable<T> implements Publisher<T> {
      * is subscribed to. For this reason, in order to avoid memory leaks, you should not simply ignore those
      * {@code GroupedPublisher}s that do not concern you. Instead, you can signal to them that they may
      * discard their buffers by applying an operator like {@link #ignoreElements} to them.
+     * <p>
+     * Note that the {@link GroupedFlowable}s should be subscribed to as soon as possible, otherwise,
+     * the unconsumed groups may starve other groups due to the internal backpressure
+     * coordination of the {@code groupBy} operator. Such hangs can be usually avoided by using
+     * {@link #flatMap(Function, int)} or {@link #concatMapEager(Function, int, int)} and overriding the default maximum concurrency
+     * value to be greater or equal to the expected number of groups, possibly using
+     * {@code Integer.MAX_VALUE} if the number of expected groups is unknown.
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>Both the returned and its inner {@code Publisher}s honor backpressure and the source {@code Publisher}
@@ -10403,6 +10464,14 @@ public abstract class Flowable<T> implements Publisher<T> {
      * is subscribed to. For this reason, in order to avoid memory leaks, you should not simply ignore those
      * {@code GroupedPublisher}s that do not concern you. Instead, you can signal to them that they may
      * discard their buffers by applying an operator like {@link #ignoreElements} to them.
+     * <p>
+     * Note that the {@link GroupedFlowable}s should be subscribed to as soon as possible, otherwise,
+     * the unconsumed groups may starve other groups due to the internal backpressure
+     * coordination of the {@code groupBy} operator. Such hangs can be usually avoided by using
+     * {@link #flatMap(Function, int)} or {@link #concatMapEager(Function, int, int)} and overriding the default maximum concurrency
+     * value to be greater or equal to the expected number of groups, possibly using
+     * {@code Integer.MAX_VALUE} if the number of expected groups is unknown.
+     *
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>Both the returned and its inner {@code Publisher}s honor backpressure and the source {@code Publisher}
@@ -10448,6 +10517,14 @@ public abstract class Flowable<T> implements Publisher<T> {
      * is subscribed to. For this reason, in order to avoid memory leaks, you should not simply ignore those
      * {@code GroupedPublisher}s that do not concern you. Instead, you can signal to them that they may
      * discard their buffers by applying an operator like {@link #ignoreElements} to them.
+     * <p>
+     * Note that the {@link GroupedFlowable}s should be subscribed to as soon as possible, otherwise,
+     * the unconsumed groups may starve other groups due to the internal backpressure
+     * coordination of the {@code groupBy} operator. Such hangs can be usually avoided by using
+     * {@link #flatMap(Function, int)} or {@link #concatMapEager(Function, int, int)} and overriding the default maximum concurrency
+     * value to be greater or equal to the expected number of groups, possibly using
+     * {@code Integer.MAX_VALUE} if the number of expected groups is unknown.
+     *
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>Both the returned and its inner {@code Publisher}s honor backpressure and the source {@code Publisher}
@@ -10496,6 +10573,14 @@ public abstract class Flowable<T> implements Publisher<T> {
      * is subscribed to. For this reason, in order to avoid memory leaks, you should not simply ignore those
      * {@code GroupedPublisher}s that do not concern you. Instead, you can signal to them that they may
      * discard their buffers by applying an operator like {@link #ignoreElements} to them.
+     * <p>
+     * Note that the {@link GroupedFlowable}s should be subscribed to as soon as possible, otherwise,
+     * the unconsumed groups may starve other groups due to the internal backpressure
+     * coordination of the {@code groupBy} operator. Such hangs can be usually avoided by using
+     * {@link #flatMap(Function, int)} or {@link #concatMapEager(Function, int, int)} and overriding the default maximum concurrency
+     * value to be greater or equal to the expected number of groups, possibly using
+     * {@code Integer.MAX_VALUE} if the number of expected groups is unknown.
+     *
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>Both the returned and its inner {@code Publisher}s honor backpressure and the source {@code Publisher}
@@ -10592,6 +10677,14 @@ public abstract class Flowable<T> implements Publisher<T> {
      * is subscribed to. For this reason, in order to avoid memory leaks, you should not simply ignore those
      * {@code GroupedFlowable}s that do not concern you. Instead, you can signal to them that they may
      * discard their buffers by applying an operator like {@link #ignoreElements} to them.
+     * <p>
+     * Note that the {@link GroupedFlowable}s should be subscribed to as soon as possible, otherwise,
+     * the unconsumed groups may starve other groups due to the internal backpressure
+     * coordination of the {@code groupBy} operator. Such hangs can be usually avoided by using
+     * {@link #flatMap(Function, int)} or {@link #concatMapEager(Function, int, int)} and overriding the default maximum concurrency
+     * value to be greater or equal to the expected number of groups, possibly using
+     * {@code Integer.MAX_VALUE} if the number of expected groups is unknown.
+     *
      * <dl>
      *  <dt><b>Backpressure:</b></dt>
      *  <dd>Both the returned and its inner {@code GroupedFlowable}s honor backpressure and the source {@code Publisher}

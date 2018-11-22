@@ -1992,6 +1992,11 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns a cold, synchronous and stateless generator of values.
      * <p>
      * <img width="640" height="315" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/generate.2.png" alt="">
+     * <p>
+     * Note that the {@link Emitter#onNext}, {@link Emitter#onError} and
+     * {@link Emitter#onComplete} methods provided to the function via the {@link Emitter} instance should be called synchronously,
+     * never concurrently and only while the function body is executing. Calling them from multiple threads
+     * or outside the function call is not supported and leads to an undefined behavior.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code generate} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -2016,6 +2021,11 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns a cold, synchronous and stateful generator of values.
      * <p>
      * <img width="640" height="315" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/generate.2.png" alt="">
+     * <p>
+     * Note that the {@link Emitter#onNext}, {@link Emitter#onError} and
+     * {@link Emitter#onComplete} methods provided to the function via the {@link Emitter} instance should be called synchronously,
+     * never concurrently and only while the function body is executing. Calling them from multiple threads
+     * or outside the function call is not supported and leads to an undefined behavior.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code generate} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -2041,6 +2051,11 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns a cold, synchronous and stateful generator of values.
      * <p>
      * <img width="640" height="315" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/generate.2.png" alt="">
+     * <p>
+     * Note that the {@link Emitter#onNext}, {@link Emitter#onError} and
+     * {@link Emitter#onComplete} methods provided to the function via the {@link Emitter} instance should be called synchronously,
+     * never concurrently and only while the function body is executing. Calling them from multiple threads
+     * or outside the function call is not supported and leads to an undefined behavior.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code generate} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -2071,6 +2086,11 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns a cold, synchronous and stateful generator of values.
      * <p>
      * <img width="640" height="315" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/generate.2.png" alt="">
+     * <p>
+     * Note that the {@link Emitter#onNext}, {@link Emitter#onError} and
+     * {@link Emitter#onComplete} methods provided to the function via the {@link Emitter} instance should be called synchronously,
+     * never concurrently and only while the function body is executing. Calling them from multiple threads
+     * or outside the function call is not supported and leads to an undefined behavior.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code generate} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -2096,6 +2116,11 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * Returns a cold, synchronous and stateful generator of values.
      * <p>
      * <img width="640" height="315" src="https://raw.github.com/wiki/ReactiveX/RxJava/images/rx-operators/generate.2.png" alt="">
+     * <p>
+     * Note that the {@link Emitter#onNext}, {@link Emitter#onError} and
+     * {@link Emitter#onComplete} methods provided to the function via the {@link Emitter} instance should be called synchronously,
+     * never concurrently and only while the function body is executing. Calling them from multiple threads
+     * or outside the function call is not supported and leads to an undefined behavior.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code generate} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7799,6 +7824,13 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <p>
      * Note that the operator always retains the latest item from upstream regardless of the comparison result
      * and uses it in the next comparison with the next upstream item.
+     * <p>
+     * Note that if element type {@code T} in the flow is mutable, the comparison of the previous and current
+     * item may yield unexpected results if the items are mutated externally. Common cases are mutable
+     * {@code CharSequence}s or {@code List}s where the objects will actually have the same
+     * references when they are modified and {@code distinctUntilChanged} will evaluate subsequent items as same.
+     * To avoid such situation, it is recommended that mutable data is converted to an immutable one,
+     * for example using `map(CharSequence::toString)` or `map(list -> Collections.unmodifiableList(new ArrayList<>(list)))`.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code distinctUntilChanged} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7831,6 +7863,13 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <p>
      * Note that the operator always retains the latest key from upstream regardless of the comparison result
      * and uses it in the next comparison with the next key derived from the next upstream item.
+     * <p>
+     * Note that if element type {@code T} in the flow is mutable, the comparison of the previous and current
+     * item may yield unexpected results if the items are mutated externally. Common cases are mutable
+     * {@code CharSequence}s or {@code List}s where the objects will actually have the same
+     * references when they are modified and {@code distinctUntilChanged} will evaluate subsequent items as same.
+     * To avoid such situation, it is recommended that mutable data is converted to an immutable one,
+     * for example using `map(CharSequence::toString)` or `map(list -> Collections.unmodifiableList(new ArrayList<>(list)))`.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code distinctUntilChanged} does not operate by default on a particular {@link Scheduler}.</dd>
@@ -7859,6 +7898,13 @@ public abstract class Observable<T> implements ObservableSource<T> {
      * <p>
      * Note that the operator always retains the latest item from upstream regardless of the comparison result
      * and uses it in the next comparison with the next upstream item.
+     * <p>
+     * Note that if element type {@code T} in the flow is mutable, the comparison of the previous and current
+     * item may yield unexpected results if the items are mutated externally. Common cases are mutable
+     * {@code CharSequence}s or {@code List}s where the objects will actually have the same
+     * references when they are modified and {@code distinctUntilChanged} will evaluate subsequent items as same.
+     * To avoid such situation, it is recommended that mutable data is converted to an immutable one,
+     * for example using `map(CharSequence::toString)` or `map(list -> Collections.unmodifiableList(new ArrayList<>(list)))`.
      * <dl>
      *  <dt><b>Scheduler:</b></dt>
      *  <dd>{@code distinctUntilChanged} does not operate by default on a particular {@link Scheduler}.</dd>
