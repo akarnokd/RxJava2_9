@@ -56,6 +56,8 @@ matrix:
     - env: JDK='Oracle JDK 12 target 12' RXJAVA_TARGET=12
       install: . ./install-jdk.sh -F 12 -L GPL
 # ------------------------------------------------------------
+    - env: JDK='Oracle JDK 13 target 8' RXJAVA_TARGET=1.8
+      install: . ./install-jdk.sh -F 13 -L GPL
     - env: JDK='Oracle JDK 13 target 9' RXJAVA_TARGET=1.9
       install: . ./install-jdk.sh -F 13 -L GPL
     - env: JDK='Oracle JDK 13 target 10' RXJAVA_TARGET=10
