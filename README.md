@@ -22,4 +22,4 @@ JDK runtime | Target 6 | Target 8 | Target 9 | Target 10 | Target 11 | Target 12
 
 #### Note on JDK target support
 
-With the newest JDKs, certain older compile targets are no longer supported. JDK 12 dropped 6 support and JDK drops 7 support.
+With the newest JDKs, certain older compile targets are no longer supported. JDK 12 dropped 6 support and JDK 13 drops 7 support.
